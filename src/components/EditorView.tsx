@@ -34,7 +34,6 @@ export default function EditorView({
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
   const [withAudio, setWithAudio] = useState(true);
-  const [maxMb, setMaxMb] = useState(20);
   const [lastSize, setLastSize] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -132,7 +131,6 @@ export default function EditorView({
           fps,
           overlays,
           withAudio,
-          maxMegabytes: maxMb,
           onProgress: setProgress,
         });
         setLastSize(blob.size);
@@ -333,20 +331,6 @@ export default function EditorView({
           )}
 
           <div className="editor-foot">
-            {!stillOnly && (
-              <label>
-                최대 용량
-                <input
-                  type="number"
-                  min={2}
-                  max={400}
-                  step={1}
-                  value={maxMb}
-                  onChange={(e) => setMaxMb(Math.max(2, Number(e.target.value)))}
-                />
-                <span className="num">MB</span>
-              </label>
-            )}
             {!stillOnly && (
               <label className="check">
                 <input type="checkbox" checked={withAudio} onChange={(e) => setWithAudio(e.target.checked)} />

@@ -18,8 +18,6 @@ export interface SequenceOptions {
   overlays?: Overlay[];
   /** 영상 구간의 소리를 담을지. */
   withAudio?: boolean;
-  /** 목표 용량(MB). 길이에 맞춰 비트레이트를 거꾸로 계산한다. */
-  maxMegabytes?: number;
   onProgress?: (ratio: number) => void;
 }
 
@@ -70,7 +68,7 @@ export async function renderSequence(
   }
   if (clips.length === 0) throw new Error("내보낼 소재가 없습니다.");
 
-  const { fps, overlays = [], withAudio = true, maxMegabytes, onProgress } = options;
+  const { fps, overlays = [], withAudio = true, onProgress } = options;
 
   // 인코더는 짝수 치수를 요구하는 경우가 많다. 규격이 홀수면 1px 줄여 맞춘다.
   const width = targetWidth - (targetWidth % 2);
@@ -105,18 +103,8 @@ export async function renderSequence(
 
   const seconds = Math.max(0.1, totalLength(clips));
 
-  // 목표 용량이 있으면 거기서 비트레이트를 거꾸로 구한다.
-  // 스토어가 용량으로 거절할 때 품질을 손으로 깎는 것보다 이쪽이 빠르다.
-  // 없으면 화소 수에 비례해서 잡는다. 고정값이면 큰 규격에서 뭉개진다.
-  const audioBitrate = withAudio ? 128_000 : 0;
-  const bitrate = maxMegabytes
-    ? Math.min(
-        24_000_000,
-        // 컨테이너 부담을 8% 정도 남겨둔다. 꽉 채우면 목표를 넘기기 쉽다.
-        Math.max(400_000, Math.round((maxMegabytes * 8_000_000 * 0.92) / seconds) - audioBitrate)
-      )
-    : Math.min(24_000_000, Math.max(6_000_000, Math.round(width * height * fps * 0.12)));
-
+  // 화소가 많을수록 비트레이트를 올린다. 고정값이면 큰 규격에서 뭉개진다.
+  const bitrate = Math.min(24_000_000, Math.max(6_000_000, Math.round(width * height * fps * 0.12)));
   const base = { width, height, bitrate, framerate: fps };
 
   const codec = await pickCodec(base);
