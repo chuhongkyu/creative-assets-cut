@@ -57,8 +57,12 @@ export function computePlacement(
 /**
  * 끌어 옮긴 결과가 규격 밖으로 너무 빠져나가지 않게 잡아둔다.
  *
- * 규격을 덮고 있는 동안에는 빈 가장자리가 생기지 않도록 가둔다.
- * 축소해서 규격보다 작아진 상태라면 가둘 이유가 없으므로 가운데로 고정한다.
+ * 규격을 덮고 있을 때는 빈 가장자리가 생기지 않는 범위까지만 움직인다.
+ *
+ * 규격보다 작을 때는 반대로 '한쪽 끝에 붙을 때까지' 움직일 수 있어야 한다.
+ * 세로 게임 화면을 가로 규격에 넣는 경우가 그렇다. 가운데 고정이면
+ * 영상을 한쪽으로 몰고 남는 쪽에 제목을 넣는 구성을 아예 만들 수 없다.
+ * 어느 쪽이든 한계는 두 크기 차이의 절반이라 식은 같고 부호만 다르다.
  */
 export function clampTransform(
   source: Size,
@@ -71,8 +75,8 @@ export function clampTransform(
   const dw = source.width * scale;
   const dh = source.height * scale;
 
-  const limitX = Math.max(0, (dw - targetWidth) / 2) / scale;
-  const limitY = Math.max(0, (dh - targetHeight) / 2) / scale;
+  const limitX = Math.abs(dw - targetWidth) / 2 / scale;
+  const limitY = Math.abs(dh - targetHeight) / 2 / scale;
 
   return {
     zoom,

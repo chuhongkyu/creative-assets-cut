@@ -1,9 +1,15 @@
 /**
  * App Store 소재 규격.
  *
- * 이 치수는 Apple 공개 문서에 없다. Apple이 디자인 템플릿(Figma/Photoshop/Pixelmator/Sketch)에만
- * 넣어두었기 때문에, 템플릿 캔버스에서 읽은 값을 여기 적어둔다.
- * 템플릿이 갱신되면 이 파일만 고치면 된다.
+ * 예전에는 Apple 디자인 템플릿(Figma/Photoshop/Pixelmator/Sketch)의 캔버스에서 읽은 값을
+ * 적어뒀는데 전부 틀렸다. 템플릿은 믿을 출처가 아니다.
+ *
+ * 실제 치수는 Apple이 쓰는 소재 파일 이름에 그대로 박혀 있다 —
+ * `header_3840x1646_15s.mp4` 처럼 자리·해상도·길이가 한 줄에 다 들어 있다.
+ * 규격이 의심스러우면 템플릿을 다시 재지 말고 그 이름을 찾아보는 편이 빠르다.
+ *
+ * Universal(1402×962)은 템플릿에서 나온 값이라 뺐다. 그런 자리가 실제로 있는지부터
+ * 파일 이름으로 확인되면 그때 다시 넣는다.
  *
  * Google Ads 규격은 아직 넣지 않는다. 확정되기 전에 적어두면 틀린 값으로 소재를 만들게 된다.
  */
@@ -17,32 +23,18 @@ export interface Preset {
 
 export const PRESETS: Preset[] = [
   {
-    id: "universal",
-    label: "Universal",
-    width: 1402,
-    height: 962,
-    note: "헤더와 검색 결과에 함께 쓰는 소재. 하나만 만든다면 이것.",
+    id: "header",
+    label: "Product page header",
+    width: 3840,
+    height: 1646,
+    note: "제품 페이지 최상단. 방문자가 가장 먼저 보는 자리. 15초.",
   },
   {
     id: "search",
     label: "Search results",
-    width: 2168,
-    height: 1030,
-    note: "검색 결과에 노출되는 소재.",
-  },
-  {
-    id: "header",
-    label: "Product page header",
-    width: 1646,
-    height: 661,
-    note: "제품 페이지 최상단. 방문자가 가장 먼저 보는 자리.",
-  },
-  {
-    id: "wide32",
-    label: "3:2 영상",
     width: 1920,
     height: 1280,
-    note: "H.264 / MP4 / 30fps / 5~30초.",
+    note: "검색 결과에 노출되는 소재. 3:2. H.264 / MP4 / 30fps / 5~30초.",
   },
 ];
 

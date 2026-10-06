@@ -33,7 +33,7 @@ export default function Page() {
     <main className="wrap">
       <h1>Creative Asset Studio</h1>
       <p className="sub">
-        App Store 소재 규격 세 가지를 각각 편집해 내보냅니다. 처리는 전부 브라우저 안에서 끝나고 파일이
+        App Store 소재 규격을 자리별로 편집해 내보냅니다. 처리는 전부 브라우저 안에서 끝나고 파일이
         서버로 올라가지 않습니다.
       </p>
 

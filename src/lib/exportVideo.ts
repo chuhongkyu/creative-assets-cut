@@ -30,7 +30,7 @@ export function isVideoExportSupported() {
  *
  * 코덱 문자열 끝 두 자리가 '레벨'이고, 레벨이 해상도 상한을 정한다.
  * 예전에는 avc1.42001f(Baseline 3.1)를 박아 썼는데 그 레벨의 상한이 1280x720이라
- * App Store 규격(가장 큰 것이 2168x1030)에서는 모두 한계를 넘었다.
+ * App Store 규격(가장 큰 것이 3840x1646)에서는 모두 한계를 넘었다.
  * 그러면 configure는 통과하고 첫 encode에서 인코더가 닫히면서
  * "Cannot call 'encode' on a closed codec" 만 보인다. 진짜 원인이 가려지는 셈이다.
  *
