@@ -37,6 +37,13 @@ export const PRESETS: Preset[] = [
     height: 661,
     note: "제품 페이지 최상단. 방문자가 가장 먼저 보는 자리.",
   },
+  {
+    id: "wide32",
+    label: "3:2 영상",
+    width: 1920,
+    height: 1280,
+    note: "H.264 / MP4 / 30fps / 5~30초.",
+  },
 ];
 
 /** 비율을 "1.46 : 1" 형태로. 카드에 실제 모양과 함께 적어준다. */
