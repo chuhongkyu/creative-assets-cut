@@ -33,6 +33,7 @@ export default function EditorView({
   const [selectedId, setSelectedId] = useState<string | null>(clips[0]?.id ?? null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
+  const [withAudio, setWithAudio] = useState(true);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +128,7 @@ export default function EditorView({
         const blob = await renderSequence(clips, preset.width, preset.height, {
           fps,
           overlays,
+          withAudio,
           onProgress: setProgress,
         });
         download(blob, `${base}.mp4`);
@@ -325,6 +327,12 @@ export default function EditorView({
           )}
 
           <div className="editor-foot">
+            {!stillOnly && (
+              <label className="check">
+                <input type="checkbox" checked={withAudio} onChange={(e) => setWithAudio(e.target.checked)} />
+                소리 담기
+              </label>
+            )}
             {!stillOnly && (
               <label>
                 fps

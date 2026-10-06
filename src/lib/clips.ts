@@ -16,6 +16,13 @@ export interface Clip {
   length: number;
   /** 규격 안에서의 위치와 배율. 조각마다 따로 잡는다. */
   transform: Transform;
+  /**
+   * 원본 파일. 소리를 담을 때 다시 읽어야 한다.
+   *
+   * video 엘리먼트에서는 디코딩된 오디오를 꺼낼 수 없다.
+   * 파일을 들고 있다가 decodeAudioData로 따로 풀어야 한다.
+   */
+  file: File | null;
 }
 
 /**
@@ -62,6 +69,7 @@ export async function createClip(file: File): Promise<Clip> {
       // 임의의 기본 길이를 정해두면 매번 그 값을 되돌리는 일부터 하게 된다.
       length: video.duration,
       transform: { ...DEFAULT_TRANSFORM },
+      file,
     };
   }
 
@@ -80,6 +88,7 @@ export async function createClip(file: File): Promise<Clip> {
     start: 0,
     length: DEFAULT_IMAGE_SECONDS,
     transform: { ...DEFAULT_TRANSFORM },
+    file: null,
   };
 }
 

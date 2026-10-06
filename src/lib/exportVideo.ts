@@ -1,6 +1,7 @@
 import { Muxer, ArrayBufferTarget } from "mp4-muxer";
 import { paint } from "./transform";
 import { drawOverlays, type Overlay } from "./overlays";
+import { buildAudioTrack, encodeAudio, isAudioExportSupported } from "./audio";
 import { seek, totalLength, type Clip } from "./clips";
 
 /**
@@ -15,6 +16,8 @@ import { seek, totalLength, type Clip } from "./clips";
 export interface SequenceOptions {
   fps: number;
   overlays?: Overlay[];
+  /** 영상 구간의 소리를 담을지. */
+  withAudio?: boolean;
   onProgress?: (ratio: number) => void;
 }
 
@@ -65,7 +68,7 @@ export async function renderSequence(
   }
   if (clips.length === 0) throw new Error("내보낼 소재가 없습니다.");
 
-  const { fps, overlays = [], onProgress } = options;
+  const { fps, overlays = [], withAudio = true, onProgress } = options;
 
   // 인코더는 짝수 치수를 요구하는 경우가 많다. 규격이 홀수면 1px 줄여 맞춘다.
   const width = targetWidth - (targetWidth % 2);
@@ -77,10 +80,24 @@ export async function renderSequence(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("캔버스를 만들 수 없습니다.");
 
+  // 소리를 먼저 만든다. muxer는 트랙 구성을 만들 때 정해야 해서,
+  // 담을 소리가 있는지 모른 채로 시작할 수 없다.
+  const audio =
+    withAudio && isAudioExportSupported() ? await buildAudioTrack(clips, totalLength(clips)) : null;
+
   const target = new ArrayBufferTarget();
   const muxer = new Muxer({
     target,
     video: { codec: "avc", width, height },
+    ...(audio
+      ? {
+          audio: {
+            codec: "aac" as const,
+            sampleRate: audio.sampleRate,
+            numberOfChannels: Math.min(2, audio.numberOfChannels),
+          },
+        }
+      : {}),
     fastStart: "in-memory",
   });
 
@@ -144,6 +161,10 @@ export async function renderSequence(
   await encoder.flush();
   encoder.close();
   if (encoderError) throw describe(encoderError, width, height, codec);
+
+  if (audio) {
+    await encodeAudio(audio, (chunk, meta) => muxer.addAudioChunk(chunk, meta));
+  }
 
   muxer.finalize();
 

@@ -402,3 +402,6 @@ button.mute { margin: 0; padding: 7px 11px; font-size: 14px; line-height: 1; }
 .obar-edge.left { left: 0; }
 .obar-edge.right { right: 0; }
 .obar-edge:hover { background: var(--accent); }
+
+.editor-foot label.check { gap: 7px; cursor: pointer; }
+.editor-foot label.check input { accent-color: var(--accent); width: 15px; height: 15px; }
