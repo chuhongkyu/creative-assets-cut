@@ -34,6 +34,8 @@ export default function EditorView({
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
   const [withAudio, setWithAudio] = useState(true);
+  const [maxMb, setMaxMb] = useState(20);
+  const [lastSize, setLastSize] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -123,14 +125,17 @@ export default function EditorView({
           clip.transform,
           overlays
         );
+        setLastSize(blob.size);
         download(blob, `${base}.jpg`);
       } else {
         const blob = await renderSequence(clips, preset.width, preset.height, {
           fps,
           overlays,
           withAudio,
+          maxMegabytes: maxMb,
           onProgress: setProgress,
         });
+        setLastSize(blob.size);
         download(blob, `${base}.mp4`);
       }
     } catch (e) {
@@ -328,6 +333,20 @@ export default function EditorView({
 
           <div className="editor-foot">
             {!stillOnly && (
+              <label>
+                최대 용량
+                <input
+                  type="number"
+                  min={2}
+                  max={400}
+                  step={1}
+                  value={maxMb}
+                  onChange={(e) => setMaxMb(Math.max(2, Number(e.target.value)))}
+                />
+                <span className="num">MB</span>
+              </label>
+            )}
+            {!stillOnly && (
               <label className="check">
                 <input type="checkbox" checked={withAudio} onChange={(e) => setWithAudio(e.target.checked)} />
                 소리 담기
@@ -341,6 +360,9 @@ export default function EditorView({
                   <option value={30}>30</option>
                 </select>
               </label>
+            )}
+            {lastSize !== null && !busy && (
+              <span className="num done">만든 파일 {(lastSize / 1_000_000).toFixed(1)} MB</span>
             )}
             <button onClick={handleExport} disabled={busy}>
               {busy

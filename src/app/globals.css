@@ -405,3 +405,5 @@ button.mute { margin: 0; padding: 7px 11px; font-size: 14px; line-height: 1; }
 
 .editor-foot label.check { gap: 7px; cursor: pointer; }
 .editor-foot label.check input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+.editor-foot .num.done { color: var(--muted); font-size: 13px; }
