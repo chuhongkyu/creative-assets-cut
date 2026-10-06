@@ -9,6 +9,17 @@
  */
 export type OverlayKind = "text" | "image";
 
+/** 등장·퇴장 움직임. */
+export type MotionKind = "none" | "fade" | "rise" | "drop" | "scale";
+
+export const MOTION_LABEL: Record<MotionKind, string> = {
+  none: "없음",
+  fade: "서서히",
+  rise: "아래서 위로",
+  drop: "위에서 아래로",
+  scale: "커지며",
+};
+
 export interface Overlay {
   id: string;
   kind: OverlayKind;
@@ -27,6 +38,11 @@ export interface Overlay {
   start: number;
   end: number | null;
   opacity: number;
+  /** 들어올 때와 나갈 때의 움직임. */
+  enter: MotionKind;
+  exit: MotionKind;
+  /** 움직임 한 번에 걸리는 시간(초). 들어올 때와 나갈 때 모두 같은 값을 쓴다. */
+  motionSeconds: number;
 }
 
 export const TEXT_DEFAULT_SIZE = 0.12;
@@ -50,6 +66,9 @@ export function createTextOverlay(text = "텍스트"): Overlay {
     start: 0,
     end: null,
     opacity: 1,
+    enter: "fade",
+    exit: "fade",
+    motionSeconds: 0.5,
   };
 }
 
@@ -71,6 +90,9 @@ export async function createImageOverlay(file: File): Promise<Overlay> {
     start: 0,
     end: null,
     opacity: 1,
+    enter: "fade",
+    exit: "fade",
+    motionSeconds: 0.5,
   };
 }
 
@@ -78,6 +100,55 @@ export function isVisibleAt(overlay: Overlay, time: number) {
   if (time < overlay.start) return false;
 
   return overlay.end === null || time <= overlay.end;
+}
+
+/** 들어올 때는 끝에서 느려지고, 나갈 때는 처음이 느리다. 선형이면 뚝뚝 끊겨 보인다. */
+function easeOut(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+interface MotionState {
+  alpha: number;
+  dy: number;
+  scale: number;
+}
+
+/**
+ * 그 시각에 오버레이가 어떤 상태인지.
+ *
+ * progress 0이 화면 밖, 1이 제자리다. 들어올 때는 0에서 1로, 나갈 때는 1에서 0으로 간다.
+ * 움직임 종류가 달라도 이 한 값으로 표현하면 등장과 퇴장을 같은 식으로 다룰 수 있다.
+ */
+function applyMotion(kind: MotionKind, progress: number, height: number, state: MotionState) {
+  const eased = easeOut(Math.min(1, Math.max(0, progress)));
+
+  if (kind === "none") return;
+
+  // 어떤 움직임이든 투명도는 같이 간다. 위치만 움직이면 갑자기 튀어나온 것처럼 보인다.
+  state.alpha *= eased;
+
+  // 화면 밖에서 들어오는 거리. 규격 높이에 비례해야 어느 크기에서나 같은 느낌이 난다.
+  const travel = height * 0.14;
+
+  if (kind === "rise") state.dy += travel * (1 - eased);
+  else if (kind === "drop") state.dy -= travel * (1 - eased);
+  else if (kind === "scale") state.scale *= 0.82 + 0.18 * eased;
+}
+
+function motionAt(overlay: Overlay, time: number, total: number, height: number): MotionState {
+  const state: MotionState = { alpha: overlay.opacity, dy: 0, scale: 1 };
+  const span = Math.max(0.01, overlay.motionSeconds);
+  const end = overlay.end ?? total;
+
+  if (overlay.enter !== "none" && time < overlay.start + span) {
+    applyMotion(overlay.enter, (time - overlay.start) / span, height, state);
+  }
+
+  if (overlay.exit !== "none" && time > end - span) {
+    applyMotion(overlay.exit, (end - time) / span, height, state);
+  }
+
+  return state;
 }
 
 /**
@@ -91,16 +162,27 @@ export function drawOverlays(
   overlays: Overlay[],
   targetWidth: number,
   targetHeight: number,
-  time: number
+  time: number,
+  total: number
 ) {
   for (const overlay of overlays) {
     if (!isVisibleAt(overlay, time)) continue;
 
+    const motion = motionAt(overlay, time, total, targetHeight);
+    if (motion.alpha <= 0.001) continue;
+
     ctx.save();
-    ctx.globalAlpha = overlay.opacity;
+    ctx.globalAlpha = Math.min(1, motion.alpha);
 
     const cx = overlay.x * targetWidth;
-    const cy = overlay.y * targetHeight;
+    const cy = overlay.y * targetHeight + motion.dy;
+
+    // 커지는 움직임은 가운데를 기준으로 해야 제자리에서 자란다.
+    if (motion.scale !== 1) {
+      ctx.translate(cx, cy);
+      ctx.scale(motion.scale, motion.scale);
+      ctx.translate(-cx, -cy);
+    }
 
     if (overlay.kind === "text") {
       const fontSize = overlay.size * targetHeight;

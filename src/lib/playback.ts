@@ -31,6 +31,7 @@ export function drawClip(
   clip: Clip,
   overlays: Overlay[] = [],
   time = 0,
+  total = 0,
   blur = 12
 ) {
   const ctx = canvas.getContext("2d");
@@ -46,5 +47,5 @@ export function drawClip(
     blur
   );
 
-  drawOverlays(ctx, overlays, canvas.width, canvas.height, time);
+  drawOverlays(ctx, overlays, canvas.width, canvas.height, time, total);
 }

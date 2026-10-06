@@ -212,7 +212,7 @@ function ClipChip({
     if (!canvas) return;
     canvas.width = 96;
     canvas.height = 54;
-    drawClip(canvas, clip, [], 0, 4);
+    drawClip(canvas, clip, [], 0, 0, 4);
   }, [clip, clip.transform]);
 
   /**

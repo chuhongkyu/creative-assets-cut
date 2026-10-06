@@ -68,9 +68,9 @@ export function usePlayback(
         activeRef.current = pos.index;
       }
 
-      drawClip(canvas, pos.clip, overlays, at);
+      drawClip(canvas, pos.clip, overlays, at, total);
     },
-    [clips, overlays, canvasRef, stopAllVideos, muted]
+    [clips, overlays, canvasRef, stopAllVideos, muted, total]
   );
 
   // 재생 루프. 실제 흐른 시간만큼 재생 머리를 옮긴다.

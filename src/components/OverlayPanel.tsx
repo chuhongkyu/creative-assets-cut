@@ -1,6 +1,8 @@
 "use client";
 
-import { type Overlay } from "@/lib/overlays";
+import { MOTION_LABEL, type MotionKind, type Overlay } from "@/lib/overlays";
+
+const MOTIONS = Object.keys(MOTION_LABEL) as MotionKind[];
 
 /**
  * 영상 위에 얹는 글자·이미지 목록.
@@ -71,7 +73,9 @@ export default function OverlayPanel({
 
       {selected && (
         <div className="overlay-edit">
-          <p className="hint">미리보기에서 끌어 위치를 옮기세요. 다시 누르면 선택이 풀립니다.</p>
+          <p className="hint">
+            미리보기에서 끌어 위치를 옮기세요. 다시 누르면 선택이 풀립니다. 움직임은 재생해야 보입니다.
+          </p>
 
           {selected.kind === "text" && (
             <>
@@ -120,6 +124,47 @@ export default function OverlayPanel({
             />
             <span className="num">{Math.round(selected.opacity * 100)}%</span>
           </label>
+
+          <div className="overlay-motion">
+            <label>
+              등장
+              <select
+                value={selected.enter}
+                onChange={(e) => onPatch(selected.id, { enter: e.target.value as MotionKind })}
+              >
+                {MOTIONS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {MOTION_LABEL[kind]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              퇴장
+              <select
+                value={selected.exit}
+                onChange={(e) => onPatch(selected.id, { exit: e.target.value as MotionKind })}
+              >
+                {MOTIONS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {MOTION_LABEL[kind]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              속도
+              <input
+                type="range"
+                min={0.1}
+                max={2}
+                step={0.05}
+                value={selected.motionSeconds}
+                onChange={(e) => onPatch(selected.id, { motionSeconds: Number(e.target.value) })}
+              />
+              <span className="num">{selected.motionSeconds.toFixed(2)}초</span>
+            </label>
+          </div>
 
           <div className="overlay-time">
             <label>

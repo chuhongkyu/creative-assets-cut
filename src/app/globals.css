@@ -407,3 +407,8 @@ button.mute { margin: 0; padding: 7px 11px; font-size: 14px; line-height: 1; }
 .editor-foot label.check input { accent-color: var(--accent); width: 15px; height: 15px; }
 
 .editor-foot .num.done { color: var(--muted); font-size: 13px; }
+
+.overlay-motion { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.overlay-motion label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
+.overlay-motion label:last-child { flex: 1; min-width: 200px; }
+.overlay-motion input[type="range"] { flex: 1; accent-color: var(--accent); }

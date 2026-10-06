@@ -18,7 +18,8 @@ export async function renderImage(
   if (!ctx) throw new Error("캔버스를 만들 수 없습니다.");
 
   paint(ctx, source, sourceSize, targetWidth, targetHeight, transform);
-  drawOverlays(ctx, overlays, targetWidth, targetHeight, 0);
+  // 정지 이미지는 움직임이 없다. 제자리에 놓인 상태로 그린다.
+  drawOverlays(ctx, overlays, targetWidth, targetHeight, 0, 0);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

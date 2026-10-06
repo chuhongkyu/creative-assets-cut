@@ -209,6 +209,7 @@ export default function EditorView({
           selectedOverlayId={selectedOverlayId}
           onOverlayMove={(id, x, y) => patchOverlay(id, { x, y })}
           time={time}
+          total={total}
         />
       </div>
 

@@ -150,7 +150,7 @@ export async function renderSequence(
       }
 
       paint(ctx, clip.element, size, width, height, clip.transform);
-      drawOverlays(ctx, overlays, width, height, frameIndex / fps);
+      drawOverlays(ctx, overlays, width, height, frameIndex / fps, seconds);
 
       const frame = new VideoFrame(canvas, {
         timestamp: frameIndex * frameDuration,

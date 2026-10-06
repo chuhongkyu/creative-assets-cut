@@ -24,6 +24,7 @@ export default function Stage({
   selectedOverlayId,
   onOverlayMove,
   time,
+  total,
 }: {
   clip: Clip | null;
   preset: Preset;
@@ -39,6 +40,7 @@ export default function Stage({
   onOverlayMove: (id: string, x: number, y: number) => void;
   /** 재생 머리 위치. 그 시각에 보이는 오버레이만 그린다. */
   time: number;
+  total: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<{ x: number; y: number; start: Transform } | null>(null);
@@ -84,10 +86,11 @@ export default function Stage({
       overlays.filter((o) => isVisibleAt(o, time) || o.id === selectedOverlayId),
       frameW,
       frameH,
-      time
+      time,
+      total
     );
     ctx.restore();
-  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, frameW, frameH, width, height, overlays, selectedOverlayId, time]);
+  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, frameW, frameH, width, height, overlays, selectedOverlayId, time, total]);
 
   useEffect(() => {
     if (!playing) draw();
