@@ -22,6 +22,38 @@ export function isVideoExportSupported() {
   return typeof window !== "undefined" && "VideoEncoder" in window && "VideoFrame" in window;
 }
 
+/**
+ * 이 해상도를 받아주는 H.264 설정을 고른다.
+ *
+ * 코덱 문자열 끝 두 자리가 '레벨'이고, 레벨이 해상도 상한을 정한다.
+ * 예전에는 avc1.42001f(Baseline 3.1)를 박아 썼는데 그 레벨의 상한이 1280x720이라
+ * App Store 규격(가장 큰 것이 2168x1030)에서는 모두 한계를 넘었다.
+ * 그러면 configure는 통과하고 첫 encode에서 인코더가 닫히면서
+ * "Cannot call 'encode' on a closed codec" 만 보인다. 진짜 원인이 가려지는 셈이다.
+ *
+ * 그래서 넉넉한 레벨부터 차례로 물어보고 실제로 받아주는 것을 쓴다.
+ */
+const CODEC_CANDIDATES = [
+  "avc1.640034", // High 5.2
+  "avc1.4d0034", // Main 5.2
+  "avc1.420034", // Baseline 5.2
+  "avc1.640028", // High 4.0
+  "avc1.42001f", // Baseline 3.1 — 작은 규격용 마지막 보루
+];
+
+async function pickCodec(config: Omit<VideoEncoderConfig, "codec">) {
+  for (const codec of CODEC_CANDIDATES) {
+    try {
+      const support = await VideoEncoder.isConfigSupported({ ...config, codec });
+      if (support.supported) return codec;
+    } catch {
+      // 이 조합을 모르는 브라우저다. 다음 후보로 넘어간다.
+    }
+  }
+
+  return null;
+}
+
 export async function renderSequence(
   clips: Clip[],
   targetWidth: number,
@@ -52,6 +84,15 @@ export async function renderSequence(
     fastStart: "in-memory",
   });
 
+  // 화소가 많을수록 비트레이트를 올린다. 고정값이면 큰 규격에서 뭉개진다.
+  const bitrate = Math.min(24_000_000, Math.max(6_000_000, Math.round(width * height * fps * 0.12)));
+  const base = { width, height, bitrate, framerate: fps };
+
+  const codec = await pickCodec(base);
+  if (!codec) {
+    throw new Error(`이 브라우저가 ${width}×${height} 인코딩을 지원하지 않습니다.`);
+  }
+
   let encoderError: unknown = null;
   const encoder = new VideoEncoder({
     output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
@@ -60,13 +101,7 @@ export async function renderSequence(
     },
   });
 
-  encoder.configure({
-    codec: "avc1.42001f", // H.264 Baseline. 호환성이 가장 넓다.
-    width,
-    height,
-    bitrate: 6_000_000,
-    framerate: fps,
-  });
+  encoder.configure({ ...base, codec });
 
   const frameDuration = 1_000_000 / fps; // 마이크로초
   const totalFrames = Math.max(1, Math.round(totalLength(clips) * fps));
@@ -77,7 +112,7 @@ export async function renderSequence(
     const clipFrames = Math.max(1, Math.round(clip.length * fps));
 
     for (let i = 0; i < clipFrames; i++) {
-      if (encoderError) throw encoderError;
+      if (encoderError) throw describe(encoderError, width, height, codec);
 
       if (clip.isVideo) {
         await seek(clip.element as HTMLVideoElement, clip.start + i / fps);
@@ -95,8 +130,11 @@ export async function renderSequence(
       encoder.encode(frame, { keyFrame: i === 0 || frameIndex % (fps * 2) === 0 });
       frame.close();
 
-      // 인코더가 밀리면 메모리가 계속 쌓인다. 적당히 비워준다.
-      if (encoder.encodeQueueSize > 8) await encoder.flush();
+      // 인코더가 밀리면 메모리가 계속 쌓인다. 큐가 줄어들 때까지 기다린다.
+      // flush를 쓰면 매번 전체를 비우느라 느려지고 키프레임 배치도 흐트러진다.
+      while (encoder.encodeQueueSize > 8 && !encoderError) {
+        await new Promise((resolve) => setTimeout(resolve, 4));
+      }
 
       frameIndex++;
       onProgress?.(frameIndex / totalFrames);
@@ -105,9 +143,16 @@ export async function renderSequence(
 
   await encoder.flush();
   encoder.close();
-  if (encoderError) throw encoderError;
+  if (encoderError) throw describe(encoderError, width, height, codec);
 
   muxer.finalize();
 
   return new Blob([target.buffer], { type: "video/mp4" });
+}
+
+/** 인코더가 던진 것을 그대로 보여주면 원인을 알 수 없다. 설정을 붙여 돌려준다. */
+function describe(error: unknown, width: number, height: number, codec: string) {
+  const detail = error instanceof Error ? error.message : String(error);
+
+  return new Error(`인코딩에 실패했습니다 (${width}×${height}, ${codec}): ${detail}`);
 }

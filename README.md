@@ -26,7 +26,18 @@ npm run dev     # http://localhost:3000
 | MediaRecorder | webm | Chrome이 webm만 내놓는다. Apple은 mp4/mov를 요구한다 |
 | ffmpeg.wasm | mp4 | 30MB 다운로드 + SharedArrayBuffer용 COOP/COEP 헤더가 필요하다 |
 
-WebCodecs는 **Chrome·Edge·Safari 16.4+**에서 동작한다. 지원하지 않는 브라우저면 카드에 경고가 뜨고 영상 내보내기 버튼만 막힌다.
+WebCodecs는 **Chrome·Edge·Safari 16.4+**에서 동작한다. 지원하지 않는 브라우저면 경고가 뜨고 영상 내보내기만 막힌다.
+
+### 코덱 레벨 주의
+
+H.264 코덱 문자열 끝 두 자리가 **레벨**이고, 레벨이 해상도 상한을 정한다.
+`avc1.42001f`(Baseline 3.1)의 상한은 **1280×720**이라 App Store 규격은 전부 이를 넘는다.
+
+레벨이 모자라면 `configure()`는 통과하고 **첫 `encode()`에서 인코더가 닫히면서**
+`Cannot call 'encode' on a closed codec` 만 보인다. 진짜 원인이 가려지는 셈이다.
+
+그래서 넉넉한 레벨부터 `VideoEncoder.isConfigSupported()`로 물어보고 실제로 받아주는 것을 쓴다.
+에러가 나면 해상도와 코덱을 메시지에 붙여 돌려준다.
 
 ## 규격
 
