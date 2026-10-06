@@ -267,7 +267,7 @@ export default function EditorView({
             time={time}
             onSelect={setSelectedId}
             onReorder={onClips}
-            onLength={(id, length) => patch(id, { length })}
+            onPatch={patch}
             onRemove={(id) => onClips(clips.filter((c) => c.id !== id))}
             onSeek={seekTo}
           />
@@ -307,7 +307,12 @@ export default function EditorView({
                   max={Math.max(0, selected.sourceDuration - 0.5)}
                   step={0.5}
                   value={selected.start}
-                  onChange={(e) => patch(selected.id, { start: Number(e.target.value) })}
+                  onChange={(e) => {
+                    // 시작을 뒤로 밀면 남은 원본보다 길어질 수 있다. 길이를 같이 줄인다.
+                    const start = Number(e.target.value);
+                    const room = Math.max(0.5, selected.sourceDuration - start);
+                    patch(selected.id, { start, length: Math.min(selected.length, room) });
+                  }}
                 />
                 <span className="num">원본 {selected.sourceDuration.toFixed(1)}초</span>
               </label>

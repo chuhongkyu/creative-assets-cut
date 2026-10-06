@@ -314,12 +314,13 @@ button.play { margin: 0; width: 44px; padding: 9px 0; text-align: center; }
 }
 .chip-remove:hover { color: var(--text); }
 
-/* 오른쪽 끝을 끌어 길이를 바꾼다. */
-.chip-trim {
-  position: absolute; top: 0; right: 0; bottom: 0; width: 8px;
-  cursor: ew-resize; background: linear-gradient(90deg, transparent, rgba(110, 168, 254, .35));
-}
+/* 양쪽 끝을 끌어 구간을 잡는다. */
+.chip-trim { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; }
+.chip-trim.left { left: 0; background: linear-gradient(90deg, rgba(110, 168, 254, .35), transparent); }
+.chip-trim.right { right: 0; background: linear-gradient(90deg, transparent, rgba(110, 168, 254, .35)); }
 .chip-trim:hover, .chip-trim.on { background: var(--accent); }
+
+.chip-time em { font-style: normal; color: var(--accent); }
 
 .playhead {
   position: absolute; top: 0; bottom: 0; width: 2px;
