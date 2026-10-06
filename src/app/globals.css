@@ -71,11 +71,41 @@ h1 { font-size: 22px; margin: 0 0 6px; }
 
 .slot-body { margin-top: 14px; }
 
-.slot-source {
+.clip-summary {
   display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
-  margin: 0 0 12px; font-size: 13px; color: var(--muted);
+  margin: 0 0 10px; font-size: 13px; color: var(--muted);
 }
-.slot-source b { color: var(--text); font-weight: 600; }
+.clip-summary b { color: var(--text); font-weight: 600; }
+
+.clips { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.clip {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; cursor: pointer;
+}
+.clip.on { border-left-color: var(--accent); }
+.clip label { display: flex; gap: 5px; align-items: center; color: var(--muted); }
+.clip input[type="number"] { width: 62px; }
+
+.clip-index { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 14px; }
+.clip-kind {
+  color: var(--muted); font-size: 11px; border: 1px solid var(--line);
+  border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+}
+.clip-name {
+  flex: 1 1 120px; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.clip-actions { display: flex; gap: 4px; margin-left: auto; }
+
+button.icon {
+  margin: 0; background: transparent; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 2px 8px; font-size: 12px; font-weight: 500;
+}
+button.icon:disabled { opacity: .35; }
 
 .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; }
 .controls label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
