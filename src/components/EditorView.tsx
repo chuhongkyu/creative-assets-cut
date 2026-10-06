@@ -33,7 +33,7 @@ export default function EditorView({
 
   const playbackRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { playing, time, total, toggle, seekTo } = usePlayback(clips, playbackRef);
+  const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(clips, playbackRef);
 
   const selected = useMemo(
     () => clips.find((c) => c.id === selectedId) ?? clips[0] ?? null,
@@ -212,6 +212,13 @@ export default function EditorView({
             <span className="num">
               {time.toFixed(1)} / {total.toFixed(1)}초
             </span>
+            <button
+              className="ghost mute"
+              onClick={() => setMuted(!muted)}
+              title={muted ? "소리 켜기" : "소리 끄기"}
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
           </div>
 
           <Timeline

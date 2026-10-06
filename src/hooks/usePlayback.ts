@@ -13,6 +13,7 @@ import { totalLength, type Clip } from "@/lib/clips";
  */
 export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvasElement>) {
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [time, setTime] = useState(0);
   const rafRef = useRef<number | null>(null);
   const lastTickRef = useRef(0);
@@ -21,7 +22,11 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
 
   const stopAllVideos = useCallback(() => {
     for (const clip of clips) {
-      if (clip.isVideo) (clip.element as HTMLVideoElement).pause();
+      if (!clip.isVideo) continue;
+      const video = clip.element as HTMLVideoElement;
+      video.pause();
+      // 멈춘 영상은 다시 음소거해 둔다. 위치를 잡느라 seek할 때 소리가 새어 나오면 안 된다.
+      video.muted = true;
     }
   }, [clips]);
 
@@ -44,6 +49,10 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
             stopAllVideos();
             activeRef.current = pos.index;
             video.currentTime = want;
+
+            // 재생은 버튼 클릭에서 시작되므로 자동재생 정책에 걸리지 않는다.
+            video.muted = muted;
+            video.volume = 1;
             void video.play().catch(() => undefined);
           }
         } else if (Math.abs(video.currentTime - want) > 0.05) {
@@ -56,7 +65,7 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
 
       drawClip(canvas, pos.clip);
     },
-    [clips, canvasRef, stopAllVideos]
+    [clips, canvasRef, stopAllVideos, muted]
   );
 
   // 재생 루프. 실제 흐른 시간만큼 재생 머리를 옮긴다.
@@ -91,6 +100,16 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
     };
   }, [playing, total, render, stopAllVideos]);
 
+  // 재생 중에 음소거를 바꾸면 지금 울리는 영상에 바로 반영한다.
+  useEffect(() => {
+    if (!playing) return;
+    for (const clip of clips) {
+      if (!clip.isVideo) continue;
+      const video = clip.element as HTMLVideoElement;
+      if (!video.paused) video.muted = muted;
+    }
+  }, [muted, playing, clips]);
+
   // 멈춰 있을 때는 재생 머리 위치의 정확한 프레임을 보여준다.
   useEffect(() => {
     if (!playing) render(time, false);
@@ -112,5 +131,5 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
     });
   }, [total, time]);
 
-  return { playing, time, total, toggle, seekTo, stop: () => setPlaying(false) };
+  return { playing, time, total, muted, setMuted, toggle, seekTo, stop: () => setPlaying(false) };
 }
