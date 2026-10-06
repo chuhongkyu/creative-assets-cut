@@ -1,4 +1,5 @@
 import { paint, type Transform } from "./transform";
+import { drawOverlays, type Overlay } from "./overlays";
 
 /** 이미지 한 장을 규격에 맞춰 그려 jpg로 만든다. */
 export async function renderImage(
@@ -6,7 +7,8 @@ export async function renderImage(
   sourceSize: { width: number; height: number },
   targetWidth: number,
   targetHeight: number,
-  transform: Transform
+  transform: Transform,
+  overlays: Overlay[] = []
 ): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = targetWidth;
@@ -16,6 +18,7 @@ export async function renderImage(
   if (!ctx) throw new Error("캔버스를 만들 수 없습니다.");
 
   paint(ctx, source, sourceSize, targetWidth, targetHeight, transform);
+  drawOverlays(ctx, overlays, targetWidth, targetHeight, 0);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

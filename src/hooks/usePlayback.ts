@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { drawClip, locate, type Position } from "@/lib/playback";
 import { totalLength, type Clip } from "@/lib/clips";
+import { type Overlay } from "@/lib/overlays";
 
 /**
  * 타임라인 재생.
@@ -11,7 +12,11 @@ import { totalLength, type Clip } from "@/lib/clips";
  * 매 프레임 seek을 걸면 디코더가 따라오지 못해 뚝뚝 끊긴다.
  * 조각이 바뀌는 순간에만 앞엣것을 멈추고 다음 것을 제자리에서 재생한다.
  */
-export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvasElement>) {
+export function usePlayback(
+  clips: Clip[],
+  overlays: Overlay[],
+  canvasRef: React.RefObject<HTMLCanvasElement>
+) {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [time, setTime] = useState(0);
@@ -63,9 +68,9 @@ export function usePlayback(clips: Clip[], canvasRef: React.RefObject<HTMLCanvas
         activeRef.current = pos.index;
       }
 
-      drawClip(canvas, pos.clip);
+      drawClip(canvas, pos.clip, overlays, at);
     },
-    [clips, canvasRef, stopAllVideos, muted]
+    [clips, overlays, canvasRef, stopAllVideos, muted]
   );
 
   // 재생 루프. 실제 흐른 시간만큼 재생 머리를 옮긴다.

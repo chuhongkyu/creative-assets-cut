@@ -3,11 +3,13 @@
 import { useState } from "react";
 import EditorView from "@/components/EditorView";
 import { totalLength, type Clip } from "@/lib/clips";
+import { type Overlay } from "@/lib/overlays";
 import { APPLE_AGE_RULE, PRESETS, ratioLabel } from "@/lib/presets";
 
 export default function Page() {
   // 규격마다 소재가 다르므로 조각 목록도 규격별로 따로 들고 있는다.
   const [byPreset, setByPreset] = useState<Record<string, Clip[]>>({});
+  const [overlaysByPreset, setOverlaysByPreset] = useState<Record<string, Overlay[]>>({});
   const [openId, setOpenId] = useState<string | null>(null);
 
   const open = PRESETS.find((p) => p.id === openId) ?? null;
@@ -19,6 +21,8 @@ export default function Page() {
           preset={open}
           clips={byPreset[open.id] ?? []}
           onClips={(clips) => setByPreset((prev) => ({ ...prev, [open.id]: clips }))}
+          overlays={overlaysByPreset[open.id] ?? []}
+          onOverlays={(overlays) => setOverlaysByPreset((prev) => ({ ...prev, [open.id]: overlays }))}
           onBack={() => setOpenId(null)}
         />
       </main>

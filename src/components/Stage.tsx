@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { clampTransform, computePlacement, coverScale, type Transform } from "@/lib/transform";
+import { drawOverlays, type Overlay } from "@/lib/overlays";
 import type { Clip } from "@/lib/clips";
 import type { Preset } from "@/lib/presets";
 
@@ -19,6 +20,9 @@ export default function Stage({
   onTransform,
   playbackRef,
   playing,
+  overlays,
+  selectedOverlayId,
+  onOverlayMove,
 }: {
   clip: Clip | null;
   preset: Preset;
@@ -28,9 +32,14 @@ export default function Stage({
   /** 재생 중에는 틀 안쪽만 그린다. 그 캔버스를 바깥에서 넘겨받는다. */
   playbackRef: React.RefObject<HTMLCanvasElement>;
   playing: boolean;
+  overlays: Overlay[];
+  /** 고른 오버레이가 있으면 끌었을 때 조각 대신 그것이 움직인다. */
+  selectedOverlayId: string | null;
+  onOverlayMove: (id: string, x: number, y: number) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<{ x: number; y: number; start: Transform } | null>(null);
+  const overlayDragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
 
   const frameScale = Math.min((width * 0.74) / preset.width, (height * 0.78) / preset.height);
   const frameW = preset.width * frameScale;
@@ -57,7 +66,16 @@ export default function Stage({
       p.dw * frameScale,
       p.dh * frameScale
     );
-  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, width, height]);
+
+    // 오버레이는 틀 안쪽에만 그린다. 결과물에 담기는 범위가 거기까지다.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(frameLeft, frameTop, frameW, frameH);
+    ctx.clip();
+    ctx.translate(frameLeft, frameTop);
+    drawOverlays(ctx, overlays, frameW, frameH, 0);
+    ctx.restore();
+  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, frameW, frameH, width, height, overlays]);
 
   useEffect(() => {
     if (!playing) draw();
@@ -72,12 +90,32 @@ export default function Stage({
   }, [playbackRef, frameW, frameH]);
 
   function onPointerDown(e: React.PointerEvent) {
+    // 오버레이를 고른 상태면 조각이 아니라 그것을 옮긴다.
+    if (selectedOverlayId) {
+      const overlay = overlays.find((o) => o.id === selectedOverlayId);
+      if (overlay) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        overlayDragRef.current = { x: e.clientX, y: e.clientY, startX: overlay.x, startY: overlay.y };
+        return;
+      }
+    }
+
     if (!clip) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, start: clip.transform };
   }
 
   function onPointerMove(e: React.PointerEvent) {
+    const overlayDrag = overlayDragRef.current;
+    if (overlayDrag && selectedOverlayId) {
+      onOverlayMove(
+        selectedOverlayId,
+        Math.min(1, Math.max(0, overlayDrag.startX + (e.clientX - overlayDrag.x) / frameW)),
+        Math.min(1, Math.max(0, overlayDrag.startY + (e.clientY - overlayDrag.y) / frameH))
+      );
+      return;
+    }
+
     const drag = dragRef.current;
     if (!drag || !clip) return;
 
@@ -99,11 +137,12 @@ export default function Stage({
   function onPointerUp(e: React.PointerEvent) {
     e.currentTarget.releasePointerCapture(e.pointerId);
     dragRef.current = null;
+    overlayDragRef.current = null;
   }
 
   return (
     <div
-      className={`stage${clip ? "" : " empty"}${playing ? " playing" : ""}`}
+      className={`stage${clip ? "" : " empty"}${playing ? " playing" : ""}${selectedOverlayId ? " overlay-mode" : ""}`}
       style={{ width, height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

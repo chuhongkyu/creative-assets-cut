@@ -119,7 +119,7 @@ function ClipChip({
     if (!canvas) return;
     canvas.width = 96;
     canvas.height = 54;
-    drawClip(canvas, clip, 4);
+    drawClip(canvas, clip, [], 0, 4);
   }, [clip, clip.transform]);
 
   // 오른쪽 끝을 끌어 길이를 줄이고 늘린다. 숫자를 입력하는 것보다 감이 온다.

@@ -331,3 +331,48 @@ button.play { margin: 0; width: 44px; padding: 9px 0; text-align: center; }
 .editor-foot button { margin: 0; }
 
 button.mute { margin: 0; padding: 7px 11px; font-size: 14px; line-height: 1; }
+
+/* ── 오버레이 ─────────────────────────────────────────── */
+
+.stage.overlay-mode { cursor: move; }
+
+.overlays {
+  background: #0b0d12; border: 1px solid var(--line);
+  border-radius: 10px; padding: 14px;
+}
+.overlays-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.overlays-head h3 { margin: 0; font-size: 14px; }
+.overlays-add { display: flex; gap: 8px; }
+.overlays-add button { margin: 0; padding: 6px 11px; font-size: 13px; }
+.overlays-empty { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+
+.overlay-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.overlay {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid transparent; border-radius: 8px;
+  padding: 7px 10px; font-size: 13px;
+}
+.overlay.on { border-left-color: var(--accent); }
+.overlay-kind {
+  color: var(--muted); font-size: 11px; border: 1px solid var(--line);
+  border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+}
+.overlay-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.overlay .icon { margin: 0; }
+
+.overlay-edit {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.overlay-edit label { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+.overlay-edit label.wide { align-items: flex-start; }
+.overlay-edit input[type="range"] { flex: 1; accent-color: var(--accent); }
+.overlay-edit input[type="color"] { width: 40px; height: 26px; padding: 0; border-radius: 6px; background: none; }
+.overlay-edit textarea {
+  flex: 1; background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 7px 9px; font-size: 13px; font-family: inherit; resize: vertical;
+}
+.overlay-time { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.overlay-time button { margin: 0; padding: 5px 10px; font-size: 12px; }

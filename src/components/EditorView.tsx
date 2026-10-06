@@ -3,11 +3,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import Stage from "./Stage";
 import Timeline from "./Timeline";
+import OverlayPanel from "./OverlayPanel";
 import { usePlayback } from "@/hooks/usePlayback";
 import { createClip, totalLength, type Clip } from "@/lib/clips";
 import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
+import { createImageOverlay, createTextOverlay, type Overlay } from "@/lib/overlays";
 import { ratioLabel, type Preset } from "@/lib/presets";
 
 const STAGE_WIDTH = 820;
@@ -17,14 +19,19 @@ export default function EditorView({
   preset,
   clips,
   onClips,
+  overlays,
+  onOverlays,
   onBack,
 }: {
   preset: Preset;
   clips: Clip[];
   onClips: (clips: Clip[]) => void;
+  overlays: Overlay[];
+  onOverlays: (overlays: Overlay[]) => void;
   onBack: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(clips[0]?.id ?? null);
+  const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -33,7 +40,8 @@ export default function EditorView({
 
   const playbackRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(clips, playbackRef);
+  const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(clips, overlays, playbackRef);
+  const overlayInputRef = useRef<HTMLInputElement>(null);
 
   const selected = useMemo(
     () => clips.find((c) => c.id === selectedId) ?? clips[0] ?? null,
@@ -70,6 +78,30 @@ export default function EditorView({
     if (selected) patch(selected.id, { transform });
   }
 
+  function patchOverlay(id: string, next: Partial<Overlay>) {
+    onOverlays(overlays.map((o) => (o.id === id ? { ...o, ...next } : o)));
+  }
+
+  function addText() {
+    const overlay = createTextOverlay();
+    onOverlays([...overlays, overlay]);
+    setSelectedOverlayId(overlay.id);
+  }
+
+  async function addImages(files: FileList) {
+    try {
+      const made: Overlay[] = [];
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith("image/")) made.push(await createImageOverlay(file));
+      }
+      if (made.length === 0) return;
+      onOverlays([...overlays, ...made]);
+      setSelectedOverlayId(made[made.length - 1].id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   async function handleExport() {
     if (clips.length === 0) return;
     setError(null);
@@ -87,11 +119,16 @@ export default function EditorView({
           { width: clip.width, height: clip.height },
           preset.width,
           preset.height,
-          clip.transform
+          clip.transform,
+          overlays
         );
         download(blob, `${base}.jpg`);
       } else {
-        const blob = await renderSequence(clips, preset.width, preset.height, { fps, onProgress: setProgress });
+        const blob = await renderSequence(clips, preset.width, preset.height, {
+          fps,
+          overlays,
+          onProgress: setProgress,
+        });
         download(blob, `${base}.mp4`);
       }
     } catch (e) {
@@ -161,6 +198,9 @@ export default function EditorView({
           onTransform={setTransform}
           playbackRef={playbackRef}
           playing={playing}
+          overlays={overlays}
+          selectedOverlayId={selectedOverlayId}
+          onOverlayMove={(id, x, y) => patchOverlay(id, { x, y })}
         />
       </div>
 
@@ -230,6 +270,31 @@ export default function EditorView({
             onLength={(id, length) => patch(id, { length })}
             onRemove={(id) => onClips(clips.filter((c) => c.id !== id))}
             onSeek={seekTo}
+          />
+
+          <OverlayPanel
+            overlays={overlays}
+            selectedId={selectedOverlayId}
+            onSelect={setSelectedOverlayId}
+            onPatch={patchOverlay}
+            onRemove={(id) => {
+              onOverlays(overlays.filter((o) => o.id !== id));
+              if (selectedOverlayId === id) setSelectedOverlayId(null);
+            }}
+            onAddText={addText}
+            onAddImage={() => overlayInputRef.current?.click()}
+            total={total}
+          />
+          <input
+            ref={overlayInputRef}
+            type="file"
+            multiple
+            accept="image/png,image/jpeg"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files?.length) void addImages(e.target.files);
+              e.target.value = "";
+            }}
           />
 
           {selected?.isVideo && (

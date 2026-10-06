@@ -1,5 +1,6 @@
 import { Muxer, ArrayBufferTarget } from "mp4-muxer";
 import { paint } from "./transform";
+import { drawOverlays, type Overlay } from "./overlays";
 import { seek, totalLength, type Clip } from "./clips";
 
 /**
@@ -13,6 +14,7 @@ import { seek, totalLength, type Clip } from "./clips";
  */
 export interface SequenceOptions {
   fps: number;
+  overlays?: Overlay[];
   onProgress?: (ratio: number) => void;
 }
 
@@ -31,7 +33,7 @@ export async function renderSequence(
   }
   if (clips.length === 0) throw new Error("내보낼 소재가 없습니다.");
 
-  const { fps, onProgress } = options;
+  const { fps, overlays = [], onProgress } = options;
 
   // 인코더는 짝수 치수를 요구하는 경우가 많다. 규격이 홀수면 1px 줄여 맞춘다.
   const width = targetWidth - (targetWidth % 2);
@@ -82,6 +84,7 @@ export async function renderSequence(
       }
 
       paint(ctx, clip.element, size, width, height, clip.transform);
+      drawOverlays(ctx, overlays, width, height, frameIndex / fps);
 
       const frame = new VideoFrame(canvas, {
         timestamp: frameIndex * frameDuration,
