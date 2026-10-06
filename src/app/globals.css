@@ -197,7 +197,15 @@ button.ghost { background: transparent; color: var(--text); border: 1px solid va
 
 .wrap.wide { max-width: 980px; }
 
-.preset-list { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+/* 플랫폼마다 묶는다. 주의사항이 플랫폼별로 달라 한 덩어리로 보여야 한다. */
+.platform { margin: 0 0 44px; }
+
+.platform-head {
+  font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 12px;
+}
+
+.preset-list { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 
 .preset {
   margin: 0; width: 100%; text-align: left; cursor: pointer;

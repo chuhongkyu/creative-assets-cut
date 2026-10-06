@@ -340,9 +340,11 @@ export default function EditorView({
             {!stillOnly && (
               <label>
                 fps
+                {/* YouTube는 원본 프레임레이트를 그대로 권한다. 원본이 60이면 60으로 내보낸다. */}
                 <select value={fps} onChange={(e) => setFps(Number(e.target.value))}>
                   <option value={24}>24</option>
                   <option value={30}>30</option>
+                  <option value={60}>60</option>
                 </select>
               </label>
             )}
