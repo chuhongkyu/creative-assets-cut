@@ -18,11 +18,11 @@ export interface Clip {
   transform: Transform;
 }
 
-/** 이미지 한 장이 기본으로 차지하는 시간. 너무 짧으면 읽을 수 없고 길면 지루하다. */
+/**
+ * 이미지 한 장이 기본으로 차지하는 시간. 너무 짧으면 읽을 수 없고 길면 지루하다.
+ * 이미지는 원본에 길이가 없으니 값을 정해줄 수밖에 없다.
+ */
 export const DEFAULT_IMAGE_SECONDS = 2;
-
-/** 영상에서 기본으로 가져오는 길이. */
-export const DEFAULT_VIDEO_SECONDS = 5;
 
 export function totalLength(clips: Clip[]) {
   return clips.reduce((sum, clip) => sum + clip.length, 0);
@@ -58,7 +58,9 @@ export async function createClip(file: File): Promise<Clip> {
       height: video.videoHeight,
       sourceDuration: video.duration,
       start: 0,
-      length: Math.min(DEFAULT_VIDEO_SECONDS, Math.max(1, video.duration)),
+      // 영상은 통째로 넣는다. 자르고 싶으면 타임라인에서 끝을 끌면 된다.
+      // 임의의 기본 길이를 정해두면 매번 그 값을 되돌리는 일부터 하게 된다.
+      length: video.duration,
       transform: { ...DEFAULT_TRANSFORM },
     };
   }
