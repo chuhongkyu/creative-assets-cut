@@ -192,3 +192,140 @@ button.link {
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .modal-actions button { margin: 0; }
 button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+
+/* ── 규격 목록 ───────────────────────────────────────── */
+
+.wrap.wide { max-width: 980px; }
+
+.preset-list { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.preset {
+  margin: 0; width: 100%; text-align: left; cursor: pointer;
+  display: flex; gap: 18px; align-items: center;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 18px; font-weight: 400; font-size: 14px;
+  transition: border-color .15s;
+}
+.preset:hover { border-color: var(--accent); }
+
+/* 규격 비율을 그대로 가진 도형. 어떤 모양인지 한눈에 보인다. */
+.preset-shape {
+  flex: 0 0 auto; width: 132px;
+  background: #0b0d12; border: 1px solid var(--line); border-radius: 6px;
+}
+
+.preset-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.preset-text strong { font-size: 15px; }
+.preset-dim { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.preset-note { color: var(--muted); font-size: 13px; }
+.preset-state { color: var(--accent); font-size: 12px; margin-top: 4px; }
+
+/* ── 편집 화면 ───────────────────────────────────────── */
+
+.editor { display: flex; flex-direction: column; gap: 16px; }
+
+.editor-head { display: flex; align-items: center; gap: 18px; }
+.editor-head h2 { margin: 0; font-size: 17px; }
+.editor-head p { margin: 0; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.editor-head div { flex: 1; }
+.editor-head button { margin: 0; }
+.editor-head input { display: none; }
+
+.editor-stage { border-radius: 12px; border: 1px solid transparent; transition: border-color .15s; }
+.editor-stage.over { border-color: var(--accent); }
+
+.stage {
+  position: relative; background: #07080b; border-radius: 12px;
+  overflow: hidden; cursor: grab; touch-action: none; user-select: none;
+}
+.stage:active { cursor: grabbing; }
+.stage.empty { cursor: default; }
+.stage canvas { display: block; position: absolute; }
+.stage-canvas { left: 0; top: 0; }
+.stage.playing .stage-canvas { visibility: hidden; }
+
+.play-canvas { display: none; }
+.stage.playing .play-canvas { display: block; }
+
+.stage-hint {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; margin: 0;
+}
+
+.frame-mask {
+  position: absolute; pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, .85);
+  box-shadow: 0 0 0 9999px rgba(6, 7, 10, .62);
+}
+.stage.playing .frame-mask { box-shadow: 0 0 0 9999px rgba(6, 7, 10, .92); }
+
+.stage-tools { display: flex; align-items: center; gap: 16px; font-size: 13px; flex-wrap: wrap; }
+.stage-tools label { display: flex; align-items: center; gap: 8px; color: var(--muted); flex: 1; min-width: 220px; }
+.stage-tools input[type="range"] { flex: 1; accent-color: var(--accent); }
+.stage-tools button { margin: 0; }
+.tool-label { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+
+/* ── 재생 ─────────────────────────────────────────────── */
+
+.transport { display: flex; align-items: center; gap: 14px; }
+.transport input[type="range"] { flex: 1; accent-color: var(--accent); }
+button.play { margin: 0; width: 44px; padding: 9px 0; text-align: center; }
+
+/* ── 타임라인 ─────────────────────────────────────────── */
+
+.timeline { overflow-x: auto; padding-bottom: 6px; }
+
+.timeline-ruler { position: relative; height: 16px; min-width: 100%; }
+.timeline-ruler span {
+  position: absolute; top: 0; font-size: 10px; color: var(--muted);
+  transform: translateX(-50%); font-variant-numeric: tabular-nums;
+}
+
+.timeline-track {
+  position: relative; display: flex; gap: 4px; align-items: stretch;
+  min-height: 72px; min-width: 100%;
+  background: #0b0d12; border: 1px solid var(--line); border-radius: 10px; padding: 6px;
+}
+
+.chip {
+  position: relative; flex: 0 0 auto; min-width: 54px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; overflow: hidden; cursor: pointer;
+}
+.chip.on { border-color: var(--accent); }
+.chip.dragging { opacity: .7; z-index: 5; }
+
+.chip-grab { display: block; height: 100%; cursor: grab; }
+.chip-grab:active { cursor: grabbing; }
+.chip-grab canvas { display: block; width: 100%; height: 38px; object-fit: cover; background: #000; }
+
+.chip-name {
+  display: block; padding: 2px 6px 0; font-size: 11px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chip-time { display: block; padding: 0 6px 4px; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.chip-remove {
+  position: absolute; top: 2px; right: 2px; margin: 0;
+  background: rgba(6, 7, 10, .7); color: var(--muted);
+  border: 0; border-radius: 5px; padding: 0 5px; font-size: 11px; line-height: 17px;
+}
+.chip-remove:hover { color: var(--text); }
+
+/* 오른쪽 끝을 끌어 길이를 바꾼다. */
+.chip-trim {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 8px;
+  cursor: ew-resize; background: linear-gradient(90deg, transparent, rgba(110, 168, 254, .35));
+}
+.chip-trim:hover, .chip-trim.on { background: var(--accent); }
+
+.playhead {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: #ff5f6d; pointer-events: none; border-radius: 2px;
+}
+
+.editor-foot { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.editor-foot label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.editor-foot button { margin: 0; }
