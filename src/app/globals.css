@@ -18,72 +18,93 @@ body {
   line-height: 1.6;
 }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 80px; }
+/* 세로로 쌓고 왼쪽에 붙인다. 규격마다 가로 비율이 달라서
+   가운데 정렬하면 카드가 제각각 움직여 비교가 어렵다. */
+.wrap {
+  max-width: 760px;
+  margin: 0;
+  padding: 40px 24px 96px;
+}
 
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 15px; margin: 32px 0 12px; color: var(--muted); font-weight: 600; }
-.sub { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+.sub { color: var(--muted); font-size: 14px; margin: 0 0 40px; max-width: 56ch; }
 
-.drop {
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  padding: 40px 20px;
-  text-align: center;
-  cursor: pointer;
+.slot { margin-bottom: 56px; }
+
+.slot-head { margin-bottom: 12px; }
+.slot-head h2 { font-size: 17px; margin: 0 0 2px; }
+
+.slot-meta {
+  margin: 0 0 4px;
+  display: flex; gap: 10px; align-items: baseline;
+  font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.slot-meta b { font-weight: 600; }
+.slot-meta span { color: var(--muted); }
+
+.slot-note { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* 규격의 실제 비율을 그대로 가진 틀. 올리기 전에도 모양을 알 수 있다. */
+.frame {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
   background: var(--panel);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
   transition: border-color .15s;
 }
-.drop:hover, .drop.over { border-color: var(--accent); }
-.drop input { display: none; }
+.frame:hover, .frame.over { border-color: var(--accent); }
+.frame input { display: none; }
 
-.source {
-  display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 12px; padding: 14px 18px; margin-bottom: 8px;
-  font-size: 14px;
-}
-.source b { font-weight: 600; }
-.source .muted { color: var(--muted); }
+.frame-canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-.controls {
-  display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
-  margin: 16px 0 8px; font-size: 14px;
+.frame-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; gap: 4px;
+  align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; text-align: center;
 }
+.frame-empty strong { color: var(--text); font-size: 14px; }
+
+.slot-body { margin-top: 14px; }
+
+.slot-source {
+  display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  margin: 0 0 12px; font-size: 13px; color: var(--muted);
+}
+.slot-source b { color: var(--text); font-weight: 600; }
+
+.controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; }
 .controls label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+
 select, input[type="number"] {
-  background: var(--panel); color: var(--text);
+  background: var(--bg); color: var(--text);
   border: 1px solid var(--line); border-radius: 7px;
-  padding: 6px 9px; font-size: 14px;
+  padding: 5px 8px; font-size: 13px;
 }
-input[type="number"] { width: 78px; }
+input[type="number"] { width: 74px; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-
-.card {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
-}
-.card header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.card h3 { margin: 0; font-size: 15px; }
-.card .dim { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.card .note { color: var(--muted); font-size: 13px; margin: 0; }
-
-.preview {
-  width: 100%; background: #000; border-radius: 8px;
-  border: 1px solid var(--line); overflow: hidden; display: block;
-}
-
-.warn { color: var(--warn); font-size: 13px; margin: 0; }
+.warn { color: var(--warn); font-size: 13px; margin: 12px 0 0; }
 
 button {
+  margin-top: 14px;
   background: var(--accent); color: #0b1020; border: 0;
-  border-radius: 8px; padding: 9px 14px; font-size: 14px; font-weight: 600;
+  border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600;
   cursor: pointer;
 }
 button:disabled { opacity: .5; cursor: default; }
-button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+
+button.link {
+  margin: 0; background: none; border: 0; padding: 0;
+  color: var(--accent); font-size: 13px; font-weight: 500;
+  text-decoration: underline; cursor: pointer;
+}
 
 .rule {
   background: #1d1a12; border: 1px solid #3a3320; color: #e8d6a8;
-  border-radius: 10px; padding: 12px 16px; font-size: 13px; margin: 24px 0 0;
+  border-radius: 10px; padding: 14px 18px; font-size: 13px;
+  margin: 0; max-width: 60ch;
 }
