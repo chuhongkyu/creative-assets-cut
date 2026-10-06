@@ -138,3 +138,57 @@ button.link {
   border-radius: 10px; padding: 14px 18px; font-size: 13px;
   margin: 0; max-width: 60ch;
 }
+
+/* ── 크롭 창 ─────────────────────────────────────────── */
+
+.modal {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(6, 7, 10, .82);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.modal-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 14px; }
+.modal-head h3 { margin: 0; font-size: 16px; }
+.modal-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* 원본은 틀 밖까지 그려진다. 무엇이 잘려 나가는지 보여야 위치를 잡을 수 있다. */
+.stage {
+  position: relative;
+  background: #07080b;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.stage:active { cursor: grabbing; }
+.stage canvas { display: block; }
+
+/* 틀 안은 그대로, 바깥은 그늘. 거대한 box-shadow로 구멍을 뚫는다. */
+.frame-mask {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, .9);
+  box-shadow: 0 0 0 9999px rgba(6, 7, 10, .66);
+}
+
+.hint { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+
+.modal-controls { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 18px; }
+.modal-controls label { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; }
+.modal-controls input[type="range"] { flex: 1; accent-color: var(--accent); }
+.modal-controls .num { font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; color: var(--text); }
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-actions button { margin: 0; }
+button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }

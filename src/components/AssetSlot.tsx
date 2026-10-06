@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { computeDrawRect, willUpscale, type FitMode, type Focus } from "@/lib/crop";
+import { paint, willUpscale, type Transform } from "@/lib/transform";
 import { renderImage, download } from "@/lib/exportImage";
+import CropEditor from "./CropEditor";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { createClip, totalLength, type Clip } from "@/lib/clips";
 import { ratioLabel, type Preset } from "@/lib/presets";
@@ -19,9 +20,8 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
   const [clips, setClips] = useState<Clip[]>([]);
   const [active, setActive] = useState(0);
   const [over, setOver] = useState(false);
-  const [mode, setMode] = useState<FitMode>("cover");
-  const [focus, setFocus] = useState<Focus>("center");
   const [fps, setFps] = useState(30);
+  const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
 
   const current = clips[Math.min(active, clips.length - 1)] ?? null;
 
-  // 미리보기는 실제 규격의 축소판이다. 내보내기와 같은 계산을 써서 결과가 어긋나지 않는다.
+  // 미리보기는 실제 규격의 축소판이다. 내보내기와 같은 paint를 써서 결과가 어긋나지 않는다.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !current) return;
@@ -63,20 +63,16 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const size = { width: current.width, height: current.height };
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (mode === "contain") {
-      const fill = computeDrawRect(size, canvas.width, canvas.height, "cover", "center");
-      ctx.filter = "blur(10px)";
-      ctx.drawImage(current.element, fill.sx, fill.sy, fill.sw, fill.sh, -10, -10, canvas.width + 20, canvas.height + 20);
-      ctx.filter = "none";
-    }
-
-    const r = computeDrawRect(size, canvas.width, canvas.height, mode, focus);
-    ctx.drawImage(current.element, r.sx, r.sy, r.sw, r.sh, r.dx, r.dy, r.dw, r.dh);
-  }, [current, mode, focus, preset.width, preset.height]);
+    paint(
+      ctx,
+      current.element,
+      { width: current.width, height: current.height },
+      canvas.width,
+      canvas.height,
+      current.transform,
+      10
+    );
+  }, [current, preset.width, preset.height]);
 
   function update(id: string, patch: Partial<Clip>) {
     setClips((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
@@ -113,15 +109,12 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
           { width: clip.width, height: clip.height },
           preset.width,
           preset.height,
-          mode,
-          focus
+          clip.transform
         );
         download(blob, `${base}.jpg`);
       } else {
         const blob = await renderSequence(clips, preset.width, preset.height, {
           fps,
-          mode,
-          focus,
           onProgress: setProgress,
         });
         download(blob, `${base}.mp4`);
@@ -133,7 +126,9 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
     }
   }
 
-  const upscaling = clips.filter((c) => willUpscale({ width: c.width, height: c.height }, preset.width, preset.height));
+  const upscaling = clips.filter((c) =>
+    willUpscale({ width: c.width, height: c.height }, preset.width, preset.height, c.transform)
+  );
   const stillOnly = clips.length === 1 && !clips[0].isVideo;
   const seconds = totalLength(clips);
 
@@ -251,6 +246,9 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
                 </label>
 
                 <span className="clip-actions">
+                  <button className="icon" onClick={(e) => { e.stopPropagation(); setEditing(clip.id); }}>
+                    위치
+                  </button>
                   <button className="icon" onClick={(e) => { e.stopPropagation(); move(index, -1); }} disabled={index === 0}>
                     ↑
                   </button>
@@ -270,25 +268,6 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
           </ol>
 
           <div className="controls">
-            <label>
-              맞춤
-              <select value={mode} onChange={(e) => setMode(e.target.value as FitMode)}>
-                <option value="cover">잘라서 채우기</option>
-                <option value="contain">전체 담기</option>
-              </select>
-            </label>
-
-            {mode === "cover" && (
-              <label>
-                세로 기준
-                <select value={focus} onChange={(e) => setFocus(e.target.value as Focus)}>
-                  <option value="center">가운데</option>
-                  <option value="top">위쪽</option>
-                  <option value="bottom">아래쪽</option>
-                </select>
-              </label>
-            )}
-
             {!stillOnly && (
               <label>
                 fps
@@ -321,6 +300,20 @@ export default function AssetSlot({ preset }: { preset: Preset }) {
           </button>
         </div>
       )}
+
+      {editing && (() => {
+        const clip = clips.find((c) => c.id === editing);
+        if (!clip) return null;
+
+        return (
+          <CropEditor
+            clip={clip}
+            preset={preset}
+            onChange={(transform: Transform) => update(clip.id, { transform })}
+            onClose={() => setEditing(null)}
+          />
+        );
+      })()}
     </section>
   );
 }

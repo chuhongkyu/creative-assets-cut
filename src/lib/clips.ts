@@ -1,3 +1,5 @@
+import { DEFAULT_TRANSFORM, type Transform } from "./transform";
+
 /** 한 규격에 들어갈 소재 조각. 이미지와 영상을 같은 자리에 줄 세운다. */
 export interface Clip {
   id: string;
@@ -12,6 +14,8 @@ export interface Clip {
   start: number;
   /** 결과물에서 차지할 길이(초). */
   length: number;
+  /** 규격 안에서의 위치와 배율. 조각마다 따로 잡는다. */
+  transform: Transform;
 }
 
 /** 이미지 한 장이 기본으로 차지하는 시간. 너무 짧으면 읽을 수 없고 길면 지루하다. */
@@ -55,6 +59,7 @@ export async function createClip(file: File): Promise<Clip> {
       sourceDuration: video.duration,
       start: 0,
       length: Math.min(DEFAULT_VIDEO_SECONDS, Math.max(1, video.duration)),
+      transform: { ...DEFAULT_TRANSFORM },
     };
   }
 
@@ -72,6 +77,7 @@ export async function createClip(file: File): Promise<Clip> {
     sourceDuration: 0,
     start: 0,
     length: DEFAULT_IMAGE_SECONDS,
+    transform: { ...DEFAULT_TRANSFORM },
   };
 }
 
