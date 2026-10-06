@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { clampTransform, computePlacement, coverScale, type Transform } from "@/lib/transform";
-import { drawOverlays, type Overlay } from "@/lib/overlays";
+import { drawOverlays, isVisibleAt, type Overlay } from "@/lib/overlays";
 import type { Clip } from "@/lib/clips";
 import type { Preset } from "@/lib/presets";
 
@@ -23,6 +23,7 @@ export default function Stage({
   overlays,
   selectedOverlayId,
   onOverlayMove,
+  time,
 }: {
   clip: Clip | null;
   preset: Preset;
@@ -36,6 +37,8 @@ export default function Stage({
   /** 고른 오버레이가 있으면 끌었을 때 조각 대신 그것이 움직인다. */
   selectedOverlayId: string | null;
   onOverlayMove: (id: string, x: number, y: number) => void;
+  /** 재생 머리 위치. 그 시각에 보이는 오버레이만 그린다. */
+  time: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<{ x: number; y: number; start: Transform } | null>(null);
@@ -73,9 +76,18 @@ export default function Stage({
     ctx.rect(frameLeft, frameTop, frameW, frameH);
     ctx.clip();
     ctx.translate(frameLeft, frameTop);
-    drawOverlays(ctx, overlays, frameW, frameH, 0);
+
+    // 그 시각에 보이는 것만 그린다.
+    // 다만 고른 것은 구간 밖이어도 보여준다. 안 보이면 위치를 잡을 수가 없다.
+    drawOverlays(
+      ctx,
+      overlays.filter((o) => isVisibleAt(o, time) || o.id === selectedOverlayId),
+      frameW,
+      frameH,
+      time
+    );
     ctx.restore();
-  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, frameW, frameH, width, height, overlays]);
+  }, [clip, preset.width, preset.height, frameScale, frameLeft, frameTop, frameW, frameH, width, height, overlays, selectedOverlayId, time]);
 
   useEffect(() => {
     if (!playing) draw();

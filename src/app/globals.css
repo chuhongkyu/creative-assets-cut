@@ -377,3 +377,28 @@ button.mute { margin: 0; padding: 7px 11px; font-size: 14px; line-height: 1; }
 }
 .overlay-time { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .overlay-time button { margin: 0; padding: 5px 10px; font-size: 12px; }
+
+/* 오버레이가 보이는 구간. 조각과 같은 눈금 위에 올려 어느 장면에 걸치는지 보이게 한다. */
+.overlay-track {
+  position: relative; min-width: 100%; height: 30px; margin-top: 6px;
+  background: #0b0d12; border: 1px solid var(--line); border-radius: 8px;
+}
+
+.obar {
+  position: absolute; top: 4px; bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(110, 168, 254, .18);
+  border: 1px solid rgba(110, 168, 254, .5);
+  border-radius: 6px; padding: 0 10px;
+  font-size: 11px; color: var(--text);
+  cursor: grab; overflow: hidden; user-select: none;
+}
+.obar.on { background: rgba(110, 168, 254, .34); border-color: var(--accent); }
+.obar.dragging { cursor: grabbing; }
+.obar-kind { color: var(--accent); font-weight: 700; flex: 0 0 auto; }
+.obar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.obar-edge { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; }
+.obar-edge.left { left: 0; }
+.obar-edge.right { right: 0; }
+.obar-edge:hover { background: var(--accent); }

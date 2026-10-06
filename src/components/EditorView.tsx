@@ -201,6 +201,7 @@ export default function EditorView({
           overlays={overlays}
           selectedOverlayId={selectedOverlayId}
           onOverlayMove={(id, x, y) => patchOverlay(id, { x, y })}
+          time={time}
         />
       </div>
 
@@ -270,6 +271,10 @@ export default function EditorView({
             onPatch={patch}
             onRemove={(id) => onClips(clips.filter((c) => c.id !== id))}
             onSeek={seekTo}
+            overlays={overlays}
+            selectedOverlayId={selectedOverlayId}
+            onSelectOverlay={setSelectedOverlayId}
+            onPatchOverlay={patchOverlay}
           />
 
           <OverlayPanel

@@ -14,6 +14,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useRef, useState } from "react";
 import { drawClip, startOf } from "@/lib/playback";
 import { totalLength, type Clip } from "@/lib/clips";
+import { type Overlay } from "@/lib/overlays";
 
 /** 1초가 몇 픽셀인지. 조각 길이가 폭으로 보여야 길이 감각이 생긴다. */
 const PX_PER_SECOND = 56;
@@ -28,10 +29,15 @@ interface Props {
   onPatch: (id: string, next: Partial<Clip>) => void;
   onRemove: (id: string) => void;
   onSeek: (seconds: number) => void;
+  overlays: Overlay[];
+  selectedOverlayId: string | null;
+  onSelectOverlay: (id: string | null) => void;
+  onPatchOverlay: (id: string, next: Partial<Overlay>) => void;
 }
 
 export default function Timeline(props: Props) {
   const { clips, selectedId, time, onSelect, onReorder, onPatch, onRemove, onSeek } = props;
+  const { overlays, selectedOverlayId, onSelectOverlay, onPatchOverlay } = props;
   const trackRef = useRef<HTMLDivElement>(null);
   const total = totalLength(clips);
 
@@ -93,6 +99,93 @@ export default function Timeline(props: Props) {
 
         {total > 0 && <div className="playhead" style={{ left: time * PX_PER_SECOND }} />}
       </div>
+
+      {overlays.length > 0 && (
+        <div className="overlay-track" style={{ width: Math.max(total * PX_PER_SECOND, 1) }}>
+          {overlays.map((overlay) => (
+            <OverlayBar
+              key={overlay.id}
+              overlay={overlay}
+              total={total}
+              selected={overlay.id === selectedOverlayId}
+              onSelect={() => onSelectOverlay(overlay.id === selectedOverlayId ? null : overlay.id)}
+              onPatch={(next) => onPatchOverlay(overlay.id, next)}
+            />
+          ))}
+          {total > 0 && <div className="playhead" style={{ left: time * PX_PER_SECOND }} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 오버레이가 보이는 구간을 막대로 보여준다.
+ *
+ * 숫자로만 두면 "언제 뜨는지"를 머릿속에서 그려야 한다.
+ * 조각과 같은 눈금 위에 올려두면 어느 장면에 걸쳐 있는지 바로 보인다.
+ */
+function OverlayBar({
+  overlay,
+  total,
+  selected,
+  onSelect,
+  onPatch,
+}: {
+  overlay: Overlay;
+  total: number;
+  selected: boolean;
+  onSelect: () => void;
+  onPatch: (next: Partial<Overlay>) => void;
+}) {
+  const [dragging, setDragging] = useState<"move" | "start" | "end" | null>(null);
+  const end = overlay.end ?? total;
+
+  function begin(e: React.PointerEvent, kind: "move" | "start" | "end") {
+    e.stopPropagation();
+    e.preventDefault();
+    setDragging(kind);
+
+    const originX = e.clientX;
+    const from = { start: overlay.start, end };
+    const round = (v: number) => Math.round(v * 10) / 10;
+
+    const move = (ev: PointerEvent) => {
+      const delta = (ev.clientX - originX) / PX_PER_SECOND;
+
+      if (kind === "move") {
+        const span = from.end - from.start;
+        const start = Math.min(Math.max(0, total - span), Math.max(0, from.start + delta));
+        onPatch({ start: round(start), end: round(start + span) });
+      } else if (kind === "start") {
+        onPatch({ start: round(Math.min(from.end - 0.1, Math.max(0, from.start + delta))) });
+      } else {
+        onPatch({ end: round(Math.min(total, Math.max(from.start + 0.1, from.end + delta))) });
+      }
+    };
+
+    const up = () => {
+      setDragging(null);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  return (
+    <div
+      className={`obar${selected ? " on" : ""}${dragging ? " dragging" : ""}`}
+      style={{ left: overlay.start * PX_PER_SECOND, width: Math.max(18, (end - overlay.start) * PX_PER_SECOND) }}
+      onClick={onSelect}
+      onPointerDown={(e) => begin(e, "move")}
+      title={`${overlay.start.toFixed(1)}s ~ ${end.toFixed(1)}s`}
+    >
+      <span className="obar-kind">{overlay.kind === "text" ? "T" : "▣"}</span>
+      <span className="obar-name">{overlay.kind === "text" ? overlay.text || "(빈 글자)" : overlay.name}</span>
+      <div className="obar-edge left" onPointerDown={(e) => begin(e, "start")} />
+      <div className="obar-edge right" onPointerDown={(e) => begin(e, "end")} />
     </div>
   );
 }
