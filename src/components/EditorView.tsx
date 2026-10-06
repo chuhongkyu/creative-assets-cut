@@ -5,7 +5,7 @@ import Stage from "./Stage";
 import Timeline from "./Timeline";
 import OverlayPanel from "./OverlayPanel";
 import { usePlayback } from "@/hooks/usePlayback";
-import { createClip, totalLength, type Clip } from "@/lib/clips";
+import { ACCEPT_IMAGE, ACCEPT_MEDIA, createClip, totalLength, type Clip } from "@/lib/clips";
 import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
@@ -188,7 +188,7 @@ export default function EditorView({
           ref={inputRef}
           type="file"
           multiple
-          accept="video/mp4,video/quicktime,image/png,image/jpeg"
+          accept={ACCEPT_MEDIA}
           onChange={(e) => {
             if (e.target.files?.length) void addFiles(e.target.files);
             e.target.value = "";
@@ -301,7 +301,7 @@ export default function EditorView({
             ref={overlayInputRef}
             type="file"
             multiple
-            accept="image/png,image/jpeg"
+            accept={ACCEPT_IMAGE}
             style={{ display: "none" }}
             onChange={(e) => {
               if (e.target.files?.length) void addImages(e.target.files);

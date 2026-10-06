@@ -26,6 +26,15 @@ export interface Clip {
 }
 
 /**
+ * 파일 선택 창에 보여줄 형식.
+ *
+ * 끌어다 놓는 쪽은 MIME 접두사(image/, video/)만 보므로 여기 없는 형식도 들어온다.
+ * 그래서 두 경로가 어긋나지 않게 목록을 한 곳에 둔다.
+ */
+export const ACCEPT_MEDIA = "video/mp4,video/quicktime,image/png,image/jpeg,image/webp";
+export const ACCEPT_IMAGE = "image/png,image/jpeg,image/webp";
+
+/**
  * 이미지 한 장이 기본으로 차지하는 시간. 너무 짧으면 읽을 수 없고 길면 지루하다.
  * 이미지는 원본에 길이가 없으니 값을 정해줄 수밖에 없다.
  */
