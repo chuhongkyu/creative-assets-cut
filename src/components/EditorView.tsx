@@ -10,10 +10,21 @@ import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
 import { createImageOverlay, createTextOverlay, type Overlay } from "@/lib/overlays";
-import { ratioLabel, type Preset } from "@/lib/presets";
+import { isPortrait, ratioLabel, VERTICAL_SAFE_AREA_RULE, type Preset } from "@/lib/presets";
 
 const STAGE_WIDTH = 820;
 const STAGE_HEIGHT = 440;
+
+/**
+ * 세로 규격일 때의 미리보기 상자 높이.
+ *
+ * 상자는 가로로 누워 있고 틀은 그 안에 비율대로 들어간다. 세로 규격을 그대로 넣으면
+ * 높이에 걸려 틀이 193×343까지 쪼그라든다. 가로 소재를 세로로 자르는 작업은
+ * 어디를 버릴지 정확히 봐야 하는데 그 크기로는 할 수가 없다.
+ *
+ * 가로 규격은 지금 높이가 맞으므로 세로일 때만 늘인다.
+ */
+const PORTRAIT_STAGE_HEIGHT = 660;
 
 export default function EditorView({
   preset,
@@ -44,6 +55,10 @@ export default function EditorView({
   const inputRef = useRef<HTMLInputElement>(null);
   const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(clips, overlays, playbackRef);
   const overlayInputRef = useRef<HTMLInputElement>(null);
+
+  // 세로 규격은 상자를 늘려야 틀이 쓸 만한 크기로 들어간다.
+  const portrait = isPortrait(preset);
+  const stageHeight = portrait ? PORTRAIT_STAGE_HEIGHT : STAGE_HEIGHT;
 
   const selected = useMemo(
     () => clips.find((c) => c.id === selectedId) ?? clips[0] ?? null,
@@ -199,7 +214,7 @@ export default function EditorView({
           clip={selected}
           preset={preset}
           width={STAGE_WIDTH}
-          height={STAGE_HEIGHT}
+          height={stageHeight}
           onTransform={setTransform}
           playbackRef={playbackRef}
           playing={playing}
@@ -210,6 +225,10 @@ export default function EditorView({
           total={total}
         />
       </div>
+
+      {/* 가장자리가 앱 UI에 덮인다는 것은 오버레이를 놓는 동안 보여야 쓸모가 있다.
+          다 만들고 맨 아래에서 읽으면 이미 늦다. */}
+      {portrait && <p className="rule">{VERTICAL_SAFE_AREA_RULE}</p>}
 
       {selected && (
         <div className="stage-tools">

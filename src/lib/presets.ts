@@ -7,7 +7,7 @@
  */
 
 /** 규격이 어디에 올라가는지. 주의사항이 플랫폼마다 달라서 묶어둔다. */
-export type PlatformId = "appstore" | "youtube";
+export type PlatformId = "appstore" | "youtube" | "instagram";
 
 export interface Preset {
   id: string;
@@ -60,7 +60,7 @@ const APP_STORE_PRESETS: Preset[] = [
  * App Store와 달리 '규격'이 아니라 권장값이다. 벗어나도 거부되지 않고 YouTube가 알아서
  * 변환한다. 그래도 권장값으로 올리면 재변환을 한 번 덜 거친다.
  *
- * 1080p만 넣어둔다. 720p(1280×720)와 4K(3840×2160)도 받지만, 받는 해상도를 모두
+ * 가로는 1080p만 넣어둔다. 720p(1280×720)와 4K(3840×2160)도 받지만, 받는 해상도를 모두
  * 늘어놓으면 고를 때 헷갈리기만 한다. 4K 소재가 생기면 그때 넣으면 된다.
  *
  * 프레임레이트는 YouTube가 '원본 그대로'를 권한다. 그래서 규격에 박지 않고
@@ -76,6 +76,14 @@ const YOUTUBE_PRESETS: Preset[] = [
     note: "16:9 / 1080p. H.264 영상 + AAC 소리로 나가 권장 형식과 맞는다.",
   },
   {
+    id: "youtube-shorts",
+    platform: "youtube",
+    label: "Shorts",
+    width: 1080,
+    height: 1920,
+    note: "9:16 세로. 가로 소재를 넣으면 위아래가 남으니 한쪽으로 몰고 빈 쪽에 글자를 얹으면 된다.",
+  },
+  {
     id: "youtube-thumb",
     platform: "youtube",
     label: "썸네일",
@@ -85,7 +93,27 @@ const YOUTUBE_PRESETS: Preset[] = [
   },
 ];
 
-export const PRESETS: Preset[] = [...APP_STORE_PRESETS, ...YOUTUBE_PRESETS];
+/**
+ * Instagram 릴스.
+ *
+ * 치수는 Shorts와 똑같은 1080×1920이다. 그래도 자리를 따로 두는 이유는, 이 앱이
+ * 조각과 오버레이를 **규격 단위로** 들고 있기 때문이다. 하나로 합치면 두 곳에 같은 편집본만
+ * 내보낼 수 있다. 따로 두면 같은 원본으로 릴스용과 Shorts용을 다르게 자를 수 있다.
+ *
+ * 숫자가 겹친다고 합치지 말 것. 겹치는 것은 치수뿐이고 쓰임이 다르다.
+ */
+const INSTAGRAM_PRESETS: Preset[] = [
+  {
+    id: "reels",
+    platform: "instagram",
+    label: "Reels",
+    width: 1080,
+    height: 1920,
+    note: "9:16 세로. Shorts와 치수는 같지만 편집본은 따로 간다.",
+  },
+];
+
+export const PRESETS: Preset[] = [...APP_STORE_PRESETS, ...YOUTUBE_PRESETS, ...INSTAGRAM_PRESETS];
 
 /**
  * Apple은 App Store에 노출되는 모든 소재가 4+ 등급을 만족하도록 요구한다.
@@ -108,7 +136,24 @@ export interface Platform {
 export const PLATFORMS: Platform[] = [
   { id: "appstore", label: "App Store", rule: APPLE_AGE_RULE },
   { id: "youtube", label: "YouTube", rule: null },
+  { id: "instagram", label: "Instagram", rule: null },
 ];
+
+/**
+ * 세로 규격은 화면 가장자리를 앱 UI가 덮는다. 릴스도 Shorts도 위에는 계정과 설명,
+ * 아래와 오른쪽에는 버튼이 올라온다. 거기 글자를 놓으면 가려진다.
+ *
+ * 덮이는 범위를 픽셀로 적어두지 않는다. 앱 업데이트마다 달라지는 값이고,
+ * 틀린 수치를 박아두는 것이 바로 Figma 템플릿에서 당한 일이다.
+ * 가운데로 모으라는 원칙만 화면에 적어두고, 정확한 경계는 실제 앱에서 확인하는 편이 낫다.
+ */
+export const VERTICAL_SAFE_AREA_RULE =
+  "세로 소재는 위아래와 오른쪽 가장자리를 앱 UI(계정·설명·버튼)가 덮습니다. 글자와 로고는 가운데로 모으고, 올리기 전에 실제 앱에서 가려지는지 확인하세요.";
+
+/** 세로로 긴 규격인지. UI가 가장자리를 덮으므로 주의 문구를 띄운다. */
+export function isPortrait(preset: Preset) {
+  return preset.height > preset.width;
+}
 
 /** 비율을 "1.46 : 1" 형태로. 카드에 실제 모양과 함께 적어준다. */
 export function ratioLabel(width: number, height: number) {
