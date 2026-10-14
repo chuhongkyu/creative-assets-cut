@@ -16,6 +16,13 @@ export interface Preset {
   width: number;
   height: number;
   note: string;
+  /**
+   * 재생 화면 위로 앱 UI가 올라와 소재 가장자리를 덮는 자리인지.
+   *
+   * 숏폼이 그렇다. 세로라고 해서 다 해당하지는 않는다 — App Store 앱 미리보기는
+   * 세로지만 그 위에 아무것도 올라오지 않는다. 그래서 비율이 아니라 자리마다 적어둔다.
+   */
+  appChrome?: boolean;
 }
 
 /**
@@ -52,6 +59,14 @@ const APP_STORE_PRESETS: Preset[] = [
     height: 1280,
     note: "검색 결과에 노출되는 소재. 3:2.",
   },
+  {
+    id: "preview-portrait",
+    platform: "appstore",
+    label: "App preview (세로)",
+    width: 886,
+    height: 1920,
+    note: "제품 페이지에서 재생되는 영상. 세로 앱이면 이것. 가로형은 1920×886.",
+  },
 ];
 
 /**
@@ -82,6 +97,7 @@ const YOUTUBE_PRESETS: Preset[] = [
     width: 1080,
     height: 1920,
     note: "9:16 세로. 가로 소재를 넣으면 위아래가 남으니 한쪽으로 몰고 빈 쪽에 글자를 얹으면 된다.",
+    appChrome: true,
   },
   {
     id: "youtube-thumb",
@@ -110,6 +126,7 @@ const INSTAGRAM_PRESETS: Preset[] = [
     width: 1080,
     height: 1920,
     note: "9:16 세로. Shorts와 치수는 같지만 편집본은 따로 간다.",
+    appChrome: true,
   },
 ];
 
@@ -140,8 +157,11 @@ export const PLATFORMS: Platform[] = [
 ];
 
 /**
- * 세로 규격은 화면 가장자리를 앱 UI가 덮는다. 릴스도 Shorts도 위에는 계정과 설명,
+ * 숏폼은 재생 화면 가장자리를 앱 UI가 덮는다. 릴스도 Shorts도 위에는 계정과 설명,
  * 아래와 오른쪽에는 버튼이 올라온다. 거기 글자를 놓으면 가려진다.
+ *
+ * 세로라고 다 해당하지는 않아서 `appChrome`이 켜진 자리에만 띄운다.
+ * App Store 앱 미리보기는 세로지만 그 위에 아무것도 올라오지 않는다.
  *
  * 덮이는 범위를 픽셀로 적어두지 않는다. 앱 업데이트마다 달라지는 값이고,
  * 틀린 수치를 박아두는 것이 바로 Figma 템플릿에서 당한 일이다.

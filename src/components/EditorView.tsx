@@ -227,8 +227,11 @@ export default function EditorView({
       </div>
 
       {/* 가장자리가 앱 UI에 덮인다는 것은 오버레이를 놓는 동안 보여야 쓸모가 있다.
-          다 만들고 맨 아래에서 읽으면 이미 늦다. */}
-      {portrait && <p className="rule">{VERTICAL_SAFE_AREA_RULE}</p>}
+          다 만들고 맨 아래에서 읽으면 이미 늦다.
+
+          세로 전부가 아니라 숏폼에만 띄운다. App Store 앱 미리보기도 세로지만
+          그 위에는 아무것도 올라오지 않아, 띄우면 없는 제약을 지키게 만든다. */}
+      {preset.appChrome && <p className="rule">{VERTICAL_SAFE_AREA_RULE}</p>}
 
       {selected && (
         <div className="stage-tools">
