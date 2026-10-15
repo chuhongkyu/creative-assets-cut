@@ -17,8 +17,10 @@ export function usePlayback(
   clips: Clip[],
   overlays: Overlay[],
   canvasRef: React.RefObject<HTMLCanvasElement>,
-  /** 조각마다 들어오고 나가는 전환 길이(초). 0이면 딱 잘려 바뀐다. */
-  fadeSeconds = 0
+  /** 조각이 검정에서 들어오는 길이(초). 0이면 딱 시작한다. */
+  fadeInSeconds = 0,
+  /** 조각이 검정으로 나가는 길이(초). 0이면 딱 끝난다. */
+  fadeOutSeconds = 0
 ) {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -78,10 +80,10 @@ export function usePlayback(
         at,
         total,
         12,
-        fadeDim(pos.localTime, pos.clip.length, fadeSeconds)
+        fadeDim(pos.localTime, pos.clip.length, fadeInSeconds, fadeOutSeconds)
       );
     },
-    [clips, overlays, canvasRef, stopAllVideos, muted, total, fadeSeconds]
+    [clips, overlays, canvasRef, stopAllVideos, muted, total, fadeInSeconds, fadeOutSeconds]
   );
 
   // 재생 루프. 실제 흐른 시간만큼 재생 머리를 옮긴다.

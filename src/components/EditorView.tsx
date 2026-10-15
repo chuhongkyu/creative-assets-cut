@@ -11,7 +11,7 @@ import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { locate, startOf } from "@/lib/playback";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
 import { createImageOverlay, createTextOverlay, type Overlay } from "@/lib/overlays";
-import { DEFAULT_FADE_SECONDS, FADE_CHOICES } from "@/lib/transitions";
+import { FADE_CHOICES } from "@/lib/transitions";
 import { isPortrait, ratioLabel, VERTICAL_SAFE_AREA_RULE, type Preset } from "@/lib/presets";
 
 const STAGE_WIDTH = 820;
@@ -47,7 +47,9 @@ export default function EditorView({
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
   const [withAudio, setWithAudio] = useState(true);
-  const [fadeSeconds, setFadeSeconds] = useState<number>(DEFAULT_FADE_SECONDS);
+  // 기본은 둘 다 없음. 전환은 넣기로 정한 사람이 넣는 것이지 모르는 사이에 끼면 안 된다.
+  const [fadeInSeconds, setFadeInSeconds] = useState(0);
+  const [fadeOutSeconds, setFadeOutSeconds] = useState(0);
   const [lastSize, setLastSize] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -60,7 +62,8 @@ export default function EditorView({
     clips,
     overlays,
     playbackRef,
-    fadeSeconds
+    fadeInSeconds,
+    fadeOutSeconds
   );
   const overlayInputRef = useRef<HTMLInputElement>(null);
 
@@ -188,7 +191,8 @@ export default function EditorView({
           fps,
           overlays,
           withAudio,
-          fadeSeconds,
+          fadeInSeconds,
+          fadeOutSeconds,
           onProgress: setProgress,
         });
         setLastSize(blob.size);
@@ -413,10 +417,29 @@ export default function EditorView({
                 소리 담기
               </label>
             )}
+            {/* 들어올 때와 나갈 때를 따로 고른다. 묶어두면 '들어올 때만'을 만들 수 없다. */}
             {!stillOnly && (
               <label>
-                전환
-                <select value={fadeSeconds} onChange={(e) => setFadeSeconds(Number(e.target.value))}>
+                페이드 인
+                <select
+                  value={fadeInSeconds}
+                  onChange={(e) => setFadeInSeconds(Number(e.target.value))}
+                >
+                  {FADE_CHOICES.map((seconds) => (
+                    <option key={seconds} value={seconds}>
+                      {seconds === 0 ? "없음" : `${seconds}초`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {!stillOnly && (
+              <label>
+                페이드 아웃
+                <select
+                  value={fadeOutSeconds}
+                  onChange={(e) => setFadeOutSeconds(Number(e.target.value))}
+                >
                   {FADE_CHOICES.map((seconds) => (
                     <option key={seconds} value={seconds}>
                       {seconds === 0 ? "없음" : `${seconds}초`}
