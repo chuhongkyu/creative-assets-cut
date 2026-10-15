@@ -8,6 +8,7 @@ import { usePlayback } from "@/hooks/usePlayback";
 import { ACCEPT_IMAGE, ACCEPT_MEDIA, createClip, totalLength, type Clip } from "@/lib/clips";
 import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
+import { locate, startOf } from "@/lib/playback";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
 import { createImageOverlay, createTextOverlay, type Overlay } from "@/lib/overlays";
 import { DEFAULT_FADE_SECONDS, FADE_CHOICES } from "@/lib/transitions";
@@ -67,6 +68,10 @@ export default function EditorView({
   const portrait = isPortrait(preset);
   const stageHeight = portrait ? PORTRAIT_STAGE_HEIGHT : STAGE_HEIGHT;
 
+  // 오버레이가 골라져 있으면 미리보기에서 끄는 것이 조각이 아니라 그것이다.
+  // 모르고 있으면 조각이 안 움직이는 것처럼 보이므로 무엇을 끌고 있는지 적어준다.
+  const activeOverlay = overlays.find((o) => o.id === selectedOverlayId) ?? null;
+
   const selected = useMemo(
     () => clips.find((c) => c.id === selectedId) ?? clips[0] ?? null,
     [clips, selectedId]
@@ -92,6 +97,36 @@ export default function EditorView({
       }
     },
     [clips, onClips, selectedId]
+  );
+
+  /**
+   * 조각을 고르면 재생 머리도 그 조각으로 보낸다.
+   *
+   * 멈춰 있을 때 미리보기에 나오는 것은 '고른 조각'인데, 재생 머리는 따로 놀았다.
+   * 그래서 재생 머리를 이미지 구간에 올려놔도 화면에는 앞 영상이 그대로 있었고,
+   * 조각마다 위치를 따로 잡을 수 있다는 것이 드러나지 않았다. 둘을 붙여 둔다.
+   *
+   * 오버레이 선택도 푼다. 오버레이가 골라져 있으면 미리보기에서 끌었을 때
+   * 조각이 아니라 그것이 움직인다 — 조각을 고른 사람은 조각을 옮기려는 것이다.
+   */
+  const selectClip = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      setSelectedOverlayId(null);
+      const index = clips.findIndex((c) => c.id === id);
+      if (index >= 0) seekTo(startOf(clips, index));
+    },
+    [clips, seekTo]
+  );
+
+  /** 재생 머리를 옮기면 그 자리의 조각이 골라진다. 보고 있는 것을 바로 옮길 수 있어야 한다. */
+  const seekAndSelect = useCallback(
+    (at: number) => {
+      seekTo(at);
+      const pos = locate(clips, at);
+      if (pos) setSelectedId(pos.clip.id);
+    },
+    [clips, seekTo]
   );
 
   function patch(id: string, next: Partial<Clip>) {
@@ -243,7 +278,18 @@ export default function EditorView({
 
       {selected && (
         <div className="stage-tools">
-          <span className="tool-label">{playing ? "재생 중" : `선택: ${selected.name}`}</span>
+          <span className="tool-label">
+            {playing
+              ? "재생 중"
+              : activeOverlay
+                ? `오버레이: ${activeOverlay.kind === "text" ? activeOverlay.text || "(빈 글자)" : activeOverlay.name}`
+                : `조각: ${selected.name}`}
+          </span>
+          {!playing && activeOverlay && (
+            <button className="ghost" onClick={() => setSelectedOverlayId(null)}>
+              조각 옮기기로
+            </button>
+          )}
           <label>
             크기
             <input
@@ -284,7 +330,7 @@ export default function EditorView({
               max={Math.max(0.1, total)}
               step={0.05}
               value={time}
-              onChange={(e) => seekTo(Number(e.target.value))}
+              onChange={(e) => seekAndSelect(Number(e.target.value))}
             />
             <span className="num">
               {time.toFixed(1)} / {total.toFixed(1)}초
@@ -302,11 +348,11 @@ export default function EditorView({
             clips={clips}
             selectedId={selected?.id ?? null}
             time={time}
-            onSelect={setSelectedId}
+            onSelect={selectClip}
             onReorder={onClips}
             onPatch={patch}
             onRemove={(id) => onClips(clips.filter((c) => c.id !== id))}
-            onSeek={seekTo}
+            onSeek={seekAndSelect}
             overlays={overlays}
             selectedOverlayId={selectedOverlayId}
             onSelectOverlay={setSelectedOverlayId}
