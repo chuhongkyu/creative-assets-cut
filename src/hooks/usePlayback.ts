@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { drawClip, locate, type Position } from "@/lib/playback";
 import { totalLength, type Clip } from "@/lib/clips";
 import { type Overlay } from "@/lib/overlays";
+import { fadeDim } from "@/lib/transitions";
 
 /**
  * 타임라인 재생.
@@ -15,7 +16,9 @@ import { type Overlay } from "@/lib/overlays";
 export function usePlayback(
   clips: Clip[],
   overlays: Overlay[],
-  canvasRef: React.RefObject<HTMLCanvasElement>
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  /** 조각마다 들어오고 나가는 전환 길이(초). 0이면 딱 잘려 바뀐다. */
+  fadeSeconds = 0
 ) {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -68,9 +71,17 @@ export function usePlayback(
         activeRef.current = pos.index;
       }
 
-      drawClip(canvas, pos.clip, overlays, at, total);
+      drawClip(
+        canvas,
+        pos.clip,
+        overlays,
+        at,
+        total,
+        12,
+        fadeDim(pos.localTime, pos.clip.length, fadeSeconds)
+      );
     },
-    [clips, overlays, canvasRef, stopAllVideos, muted, total]
+    [clips, overlays, canvasRef, stopAllVideos, muted, total, fadeSeconds]
   );
 
   // 재생 루프. 실제 흐른 시간만큼 재생 머리를 옮긴다.

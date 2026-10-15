@@ -1,5 +1,6 @@
 import { paint } from "./transform";
 import { drawOverlays, type Overlay } from "./overlays";
+import { drawFade } from "./transitions";
 import { type Clip } from "./clips";
 
 /** 타임라인 위의 한 지점이 어느 조각의 어느 시각인지. */
@@ -32,7 +33,9 @@ export function drawClip(
   overlays: Overlay[] = [],
   time = 0,
   total = 0,
-  blur = 12
+  blur = 12,
+  /** 전환으로 덮을 검정의 진하기. 0이면 덮지 않는다. */
+  dim = 0
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -48,4 +51,7 @@ export function drawClip(
   );
 
   drawOverlays(ctx, overlays, canvas.width, canvas.height, time, total);
+
+  // 전환은 맨 위에 올린다. 장면이 어두워지는데 그 위의 글자만 밝게 남으면 어색하다.
+  drawFade(ctx, canvas.width, canvas.height, dim);
 }

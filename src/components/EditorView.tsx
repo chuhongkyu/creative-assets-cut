@@ -10,6 +10,7 @@ import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { clampTransform, MAX_ZOOM, MIN_ZOOM, willUpscale, type Transform } from "@/lib/transform";
 import { createImageOverlay, createTextOverlay, type Overlay } from "@/lib/overlays";
+import { DEFAULT_FADE_SECONDS, FADE_CHOICES } from "@/lib/transitions";
 import { isPortrait, ratioLabel, VERTICAL_SAFE_AREA_RULE, type Preset } from "@/lib/presets";
 
 const STAGE_WIDTH = 820;
@@ -45,6 +46,7 @@ export default function EditorView({
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [fps, setFps] = useState(30);
   const [withAudio, setWithAudio] = useState(true);
+  const [fadeSeconds, setFadeSeconds] = useState<number>(DEFAULT_FADE_SECONDS);
   const [lastSize, setLastSize] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -53,7 +55,12 @@ export default function EditorView({
 
   const playbackRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(clips, overlays, playbackRef);
+  const { playing, time, total, muted, setMuted, toggle, seekTo } = usePlayback(
+    clips,
+    overlays,
+    playbackRef,
+    fadeSeconds
+  );
   const overlayInputRef = useRef<HTMLInputElement>(null);
 
   // 세로 규격은 상자를 늘려야 틀이 쓸 만한 크기로 들어간다.
@@ -146,6 +153,7 @@ export default function EditorView({
           fps,
           overlays,
           withAudio,
+          fadeSeconds,
           onProgress: setProgress,
         });
         setLastSize(blob.size);
@@ -357,6 +365,18 @@ export default function EditorView({
               <label className="check">
                 <input type="checkbox" checked={withAudio} onChange={(e) => setWithAudio(e.target.checked)} />
                 소리 담기
+              </label>
+            )}
+            {!stillOnly && (
+              <label>
+                전환
+                <select value={fadeSeconds} onChange={(e) => setFadeSeconds(Number(e.target.value))}>
+                  {FADE_CHOICES.map((seconds) => (
+                    <option key={seconds} value={seconds}>
+                      {seconds === 0 ? "없음" : `${seconds}초`}
+                    </option>
+                  ))}
+                </select>
               </label>
             )}
             {!stillOnly && (

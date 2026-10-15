@@ -2,6 +2,7 @@ import { Muxer, ArrayBufferTarget } from "mp4-muxer";
 import { paint } from "./transform";
 import { drawOverlays, type Overlay } from "./overlays";
 import { buildAudioTrack, encodeAudio, isAudioExportSupported } from "./audio";
+import { drawFade, fadeDim } from "./transitions";
 import { seek, totalLength, type Clip } from "./clips";
 
 /**
@@ -18,6 +19,8 @@ export interface SequenceOptions {
   overlays?: Overlay[];
   /** 영상 구간의 소리를 담을지. */
   withAudio?: boolean;
+  /** 조각마다 들어오고 나가는 전환 길이(초). 0이면 딱 잘려 바뀐다. */
+  fadeSeconds?: number;
   onProgress?: (ratio: number) => void;
 }
 
@@ -68,7 +71,7 @@ export async function renderSequence(
   }
   if (clips.length === 0) throw new Error("내보낼 소재가 없습니다.");
 
-  const { fps, overlays = [], withAudio = true, onProgress } = options;
+  const { fps, overlays = [], withAudio = true, fadeSeconds = 0, onProgress } = options;
 
   // 인코더는 짝수 치수를 요구하는 경우가 많다. 규격이 홀수면 1px 줄여 맞춘다.
   const width = targetWidth - (targetWidth % 2);
@@ -139,6 +142,8 @@ export async function renderSequence(
 
       paint(ctx, clip.element, size, width, height, clip.transform);
       drawOverlays(ctx, overlays, width, height, frameIndex / fps, seconds);
+      // 미리보기와 같은 식을 쓴다. 보이는 대로 나와야 한다.
+      drawFade(ctx, width, height, fadeDim(i / fps, clip.length, fadeSeconds));
 
       const frame = new VideoFrame(canvas, {
         timestamp: frameIndex * frameDuration,
