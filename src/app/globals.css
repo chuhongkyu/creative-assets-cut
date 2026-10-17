@@ -323,6 +323,18 @@ button.play { margin: 0; width: 44px; padding: 9px 0; text-align: center; }
 .chip-remove:hover { color: var(--text); }
 
 /* 양쪽 끝을 끌어 구간을 잡는다. */
+/* 마지막 프레임이 멈춰 있는 구간. 빗금으로 '원본이 없는 자리'임을 보여준다. */
+.chip-freeze {
+  position: absolute; top: 0; bottom: 0; pointer-events: none;
+  border-left: 1px dashed rgba(255, 182, 72, .7);
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 182, 72, .16) 0 5px,
+    transparent 5px 10px
+  );
+}
+.chip-time .freeze { color: var(--warn); font-style: normal; }
+
 .chip-trim { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; }
 .chip-trim.left { left: 0; background: linear-gradient(90deg, rgba(110, 168, 254, .35), transparent); }
 .chip-trim.right { right: 0; background: linear-gradient(90deg, transparent, rgba(110, 168, 254, .35)); }

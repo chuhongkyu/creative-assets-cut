@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { drawClip, locate, type Position } from "@/lib/playback";
-import { totalLength, type Clip } from "@/lib/clips";
+import { sourceTimeAt, totalLength, type Clip } from "@/lib/clips";
 import { type Overlay } from "@/lib/overlays";
 import { fadeDim } from "@/lib/transitions";
 
@@ -51,7 +51,8 @@ export function usePlayback(
 
       if (pos.clip.isVideo) {
         const video = pos.clip.element as HTMLVideoElement;
-        const want = pos.clip.start + pos.localTime;
+        // 원본이 끝난 뒤로는 마지막 프레임에 머문다. 끌어 늘린 만큼 정지 화면이 된다.
+        const want = sourceTimeAt(pos.clip, pos.localTime);
 
         if (live) {
           // 조각이 바뀌었을 때만 자리를 맞추고 재생을 넘긴다.

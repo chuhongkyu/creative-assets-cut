@@ -13,7 +13,7 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable 
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useRef, useState } from "react";
 import { drawClip, startOf } from "@/lib/playback";
-import { totalLength, type Clip } from "@/lib/clips";
+import { freezeLength, MAX_FREEZE_SECONDS, playableLength, totalLength, type Clip } from "@/lib/clips";
 import { type Overlay } from "@/lib/overlays";
 
 /** 1초가 몇 픽셀인지. 조각 길이가 폭으로 보여야 길이 감각이 생긴다. */
@@ -204,6 +204,7 @@ function ClipChip({
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: clip.id });
+  const freeze = freezeLength(clip);
   const thumbRef = useRef<HTMLCanvasElement>(null);
   const [trimming, setTrimming] = useState<"start" | "end" | null>(null);
 
@@ -235,7 +236,10 @@ function ClipChip({
       const delta = (ev.clientX - originX) / PX_PER_SECOND;
 
       if (edge === "end") {
-        const limit = clip.isVideo ? Math.max(MIN_LENGTH, clip.sourceDuration - from.start) : 30;
+        // 원본 끝보다 더 끌 수 있다. 넘어간 만큼은 마지막 프레임이 멈춰 있는 구간이 된다.
+        const limit = clip.isVideo
+          ? Math.max(MIN_LENGTH, clip.sourceDuration - from.start + MAX_FREEZE_SECONDS)
+          : 30;
         onPatch({ length: round(Math.min(limit, Math.max(MIN_LENGTH, from.length + delta))) });
         return;
       }
@@ -280,6 +284,8 @@ function ClipChip({
         <span className="chip-time">
           {clip.isVideo && clip.start > 0 && <em>{clip.start.toFixed(1)}s~ </em>}
           {clip.length.toFixed(1)}s
+          {/* 멈춘 구간이 있으면 길이만 봐서는 모른다. 얼마가 정지인지 적어준다. */}
+          {freeze > 0.05 && <em className="freeze"> +{freeze.toFixed(1)}s 정지</em>}
         </span>
       </div>
 
@@ -292,6 +298,15 @@ function ClipChip({
       >
         ✕
       </button>
+
+      {/* 멈춰 있는 구간을 조각 위에 겹쳐 보여준다. 폭이 곧 정지 시간이다. */}
+      {freeze > 0.05 && (
+        <div
+          className="chip-freeze"
+          style={{ left: playableLength(clip) * PX_PER_SECOND, width: freeze * PX_PER_SECOND }}
+          title={`마지막 프레임이 ${freeze.toFixed(1)}초 멈춰 있습니다`}
+        />
+      )}
 
       <div
         className={`chip-trim left${trimming === "start" ? " on" : ""}`}

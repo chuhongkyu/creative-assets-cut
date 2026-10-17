@@ -40,6 +40,36 @@ export const ACCEPT_IMAGE = "image/png,image/jpeg,image/webp";
  */
 export const DEFAULT_IMAGE_SECONDS = 2;
 
+/**
+ * 원본이 끝난 뒤로 더 끌 수 있는 시간(초).
+ *
+ * 영상이 끝나는 순간 다음 장면으로 넘어가면 급하다. 마지막 프레임을 잠깐 세워두면
+ * 여운이 생긴다. 보통 0.5~1초면 충분해서 상한을 길게 둘 이유는 없지만,
+ * 짧게 잡아두면 "왜 안 늘어나지"가 되므로 넉넉히 둔다.
+ */
+export const MAX_FREEZE_SECONDS = 5;
+
+/**
+ * 조각에서 원본이 실제로 흐르는 길이.
+ *
+ * 영상은 `start`부터 원본 끝까지가 한계다. 그보다 길게 잡아둔 만큼은 원본이 없다.
+ */
+export function playableLength(clip: Clip) {
+  if (!clip.isVideo) return clip.length;
+
+  return Math.max(0, Math.min(clip.length, clip.sourceDuration - clip.start));
+}
+
+/** 끝에서 마지막 프레임이 멈춰 있는 시간(초). 0이면 멈추는 구간이 없다. */
+export function freezeLength(clip: Clip) {
+  return Math.max(0, clip.length - playableLength(clip));
+}
+
+/** 그 조각의 그 시각에 원본의 어느 지점을 보여줄지. 원본이 끝났으면 마지막 프레임에 머문다. */
+export function sourceTimeAt(clip: Clip, localTime: number) {
+  return Math.min(clip.start + localTime, Math.max(0, clip.sourceDuration - 0.001));
+}
+
 export function totalLength(clips: Clip[]) {
   return clips.reduce((sum, clip) => sum + clip.length, 0);
 }

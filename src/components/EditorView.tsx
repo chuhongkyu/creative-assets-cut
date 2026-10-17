@@ -5,7 +5,7 @@ import Stage from "./Stage";
 import Timeline from "./Timeline";
 import OverlayPanel from "./OverlayPanel";
 import { usePlayback } from "@/hooks/usePlayback";
-import { ACCEPT_IMAGE, ACCEPT_MEDIA, createClip, totalLength, type Clip } from "@/lib/clips";
+import { ACCEPT_IMAGE, ACCEPT_MEDIA, createClip, MAX_FREEZE_SECONDS, totalLength, type Clip } from "@/lib/clips";
 import { renderImage, download } from "@/lib/exportImage";
 import { renderSequence, isVideoExportSupported } from "@/lib/exportVideo";
 import { locate, startOf } from "@/lib/playback";
@@ -401,7 +401,8 @@ export default function EditorView({
                   onChange={(e) => {
                     // 시작을 뒤로 밀면 남은 원본보다 길어질 수 있다. 길이를 같이 줄인다.
                     const start = Number(e.target.value);
-                    const room = Math.max(0.5, selected.sourceDuration - start);
+                    // 멈춘 구간까지 더한 것이 한계다. 원본 길이로만 자르면 정지 구간이 날아간다.
+                    const room = Math.max(0.5, selected.sourceDuration - start + MAX_FREEZE_SECONDS);
                     patch(selected.id, { start, length: Math.min(selected.length, room) });
                   }}
                 />
