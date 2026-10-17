@@ -1,4 +1,5 @@
-import { type Clip } from "./clips";
+import { playableLength, type Clip } from "./clips";
+import { fadeSpans } from "./transitions";
 
 /**
  * 조각들의 소리를 타임라인 순서대로 한 줄로 만든다.
@@ -12,12 +13,25 @@ import { type Clip } from "./clips";
 export const SAMPLE_RATE = 48000;
 export const CHANNELS = 2;
 
+/**
+ * 조각 경계마다 최소한으로 넣는 기울기(초).
+ *
+ * 파형을 아무 데서나 끊으면 '툭' 하는 소리가 난다. 전환을 끈 상태에서도
+ * 이만큼은 깎아야 깨끗하게 붙는다. 10ms라 들리지 않는다.
+ */
+const DECLICK_SECONDS = 0.01;
+
 export function isAudioExportSupported() {
   return typeof window !== "undefined" && "AudioEncoder" in window && "AudioData" in window;
 }
 
 /** 소리가 하나라도 있으면 합쳐 돌려준다. 전부 무음이면 null. */
-export async function buildAudioTrack(clips: Clip[], totalSeconds: number): Promise<AudioBuffer | null> {
+export async function buildAudioTrack(
+  clips: Clip[],
+  totalSeconds: number,
+  fadeInSeconds = 0,
+  fadeOutSeconds = 0
+): Promise<AudioBuffer | null> {
   if (totalSeconds <= 0) return null;
 
   const decoded = new Map<File, AudioBuffer | null>();
@@ -55,9 +69,39 @@ export async function buildAudioTrack(clips: Clip[], totalSeconds: number): Prom
     if (buffer) {
       const source = offline.createBufferSource();
       source.buffer = buffer;
+
+      // 실제로 들리는 길이. 끝을 끌어 멈춰 세운 구간은 원본이 없으므로 소리도 없다.
+      const audible = Math.min(
+        playableLength(clip),
+        Math.max(0, buffer.duration - clip.start)
+      );
+
+      /**
+       * 소리를 줄이는 기준은 조각 길이가 아니라 **들리는 길이**다.
+       *
+       * 멈춤 구간이 있으면 화면은 조각 끝에서 어두워지지만 소리는 그보다 먼저 끝난다.
+       * 화면 기준으로 줄이면 소리가 이미 사라진 뒤에 줄이는 셈이라 끊김이 그대로 남는다.
+       */
+      const { entering, leaving } = fadeSpans(audible, fadeInSeconds, fadeOutSeconds);
+
+      // 각 기울기는 들리는 길이의 절반을 넘지 않는다. 최소 기울기를 더한 탓에
+      // 둘을 합친 것이 들리는 길이보다 길어지면 게인 이벤트 순서가 뒤집힌다.
+      const half = audible / 2;
+      const inEnd = Math.min(Math.max(DECLICK_SECONDS, entering), half);
+      const outStart = Math.max(inEnd, audible - Math.min(Math.max(DECLICK_SECONDS, leaving), half));
+
+      const gain = offline.createGain();
+      const g = gain.gain;
+      g.setValueAtTime(0, at);
+      g.linearRampToValueAtTime(1, at + inEnd);
+      g.setValueAtTime(1, at + outStart);
+      g.linearRampToValueAtTime(0, at + audible);
+
+      source.connect(gain);
+      gain.connect(offline.destination);
+
       // 원본에서 쓰기로 한 구간만 그 자리에 꽂는다.
-      source.start(at, clip.start, Math.min(clip.length, Math.max(0, buffer.duration - clip.start)));
-      source.connect(offline.destination);
+      source.start(at, clip.start, audible);
     }
 
     at += clip.length;

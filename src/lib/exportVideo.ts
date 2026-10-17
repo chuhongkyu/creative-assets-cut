@@ -94,8 +94,11 @@ export async function renderSequence(
 
   // 소리를 먼저 만든다. muxer는 트랙 구성을 만들 때 정해야 해서,
   // 담을 소리가 있는지 모른 채로 시작할 수 없다.
+  // 소리도 화면과 같은 값으로 줄인다. 화면만 어두워지고 소리가 그대로면 끝이 끊겨 들린다.
   const audio =
-    withAudio && isAudioExportSupported() ? await buildAudioTrack(clips, totalLength(clips)) : null;
+    withAudio && isAudioExportSupported()
+      ? await buildAudioTrack(clips, totalLength(clips), fadeInSeconds, fadeOutSeconds)
+      : null;
 
   const target = new ArrayBufferTarget();
   const muxer = new Muxer({

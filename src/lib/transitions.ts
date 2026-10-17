@@ -31,6 +31,27 @@ export const DEFAULT_FADE_SECONDS = 0;
  * 가감속을 넣지 않았다. 위치가 움직이는 것과 달리 밝기는 선형으로 가는 쪽이
  * 눈에 고르게 보이고, 그게 영상에서 쓰는 방식이다.
  */
+/**
+ * 들어오고 나가는 구간을 주어진 길이 안에 맞춘다. 합이 길면 같은 비율로 줄인다.
+ *
+ * 화면과 소리가 같은 식을 쓴다. 다만 넘기는 '길이'가 다르다 —
+ * 화면은 조각 전체 길이, 소리는 **실제로 들리는 길이**다.
+ * 끝을 끌어 마지막 프레임을 멈춰 세운 조각은 소리가 먼저 끝나기 때문이다.
+ */
+export function fadeSpans(length: number, fadeInSeconds: number, fadeOutSeconds: number) {
+  let entering = Math.max(0, fadeInSeconds);
+  let leaving = Math.max(0, fadeOutSeconds);
+
+  const total = entering + leaving;
+  if (total > length && total > 0) {
+    const shrink = length / total;
+    entering *= shrink;
+    leaving *= shrink;
+  }
+
+  return { entering, leaving };
+}
+
 export function fadeDim(
   localTime: number,
   clipLength: number,
@@ -38,17 +59,9 @@ export function fadeDim(
   fadeOutSeconds: number
 ) {
   if (clipLength <= 0) return 0;
+  if (fadeInSeconds <= 0 && fadeOutSeconds <= 0) return 0;
 
-  let entering = Math.max(0, fadeInSeconds);
-  let leaving = Math.max(0, fadeOutSeconds);
-  if (entering <= 0 && leaving <= 0) return 0;
-
-  const total = entering + leaving;
-  if (total > clipLength) {
-    const shrink = clipLength / total;
-    entering *= shrink;
-    leaving *= shrink;
-  }
+  const { entering, leaving } = fadeSpans(clipLength, fadeInSeconds, fadeOutSeconds);
 
   // 꺼져 있는 쪽은 제 밝기로 둔다. 1을 넣으면 min에 걸리지 않는다.
   const inRatio = entering > 0 ? localTime / entering : 1;
